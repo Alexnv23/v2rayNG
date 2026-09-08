@@ -64,27 +64,14 @@ jobs:
       run: |
         cp -r ${{ github.workspace }}/libs ${{ github.workspace }}/V2rayNG/app
 
-    - name: Fetch AndroidLibXrayLite tag
-      run: |
-        pushd AndroidLibXrayLite
-        CURRENT_TAG=$(git describe --tags --abbrev=0)
-        echo "Current tag in this repo: $CURRENT_TAG"
-        echo "CURRENT_TAG=$CURRENT_TAG" >> $GITHUB_ENV
-        popd
-
-    - name: Download libv2ray
-      uses: robinraju/release-downloader@v1.13
-      with:
-        repository: '2dust/AndroidLibXrayLite'
-        tag: ${{ env.CURRENT_TAG }}
-        fileName: 'libv2ray.aar'
-        out-file-path: V2rayNG/app/libs/
-
-    # ===== SuperNet: сборка olcrtc.aar (запасной канал) =====
-    - name: Checkout olcRTC (upstream)
+    # ===== SuperNet: ОДИН libv2ray.aar = Xray-core (AndroidLibXrayLite) + olcRTC (mobile) =====
+    # Два отдельных gomobile-AAR нельзя: дублируются go.Seq/go.Universe и libgojni.so.
+    # Рецепт — как в venterum/veil compile-libv2ray.sh. Готовый AAR кэшируется по коммитам.
+    - name: Checkout olcRTC (pinned)
       uses: actions/checkout@v7
       with:
         repository: openlibrecommunity/olcrtc
+        ref: 189d16c093c4f721376afb5eaa0213d132a11242
         path: olcrtc
         fetch-depth: 1
 
@@ -92,23 +79,99 @@ jobs:
       uses: actions/setup-go@v5
       with:
         go-version-file: olcrtc/go.mod
-        cache: true
-        cache-dependency-path: olcrtc/go.sum
+        cache: false
 
-    - name: Build olcrtc.aar (gomobile)
-      working-directory: olcrtc
+    - name: Compute native lib cache key
       run: |
+        ALXL_SHA=$(git -C AndroidLibXrayLite rev-parse HEAD)
+        OLCRTC_SHA=$(git -C olcrtc rev-parse HEAD)
+        echo "ALXL_SHA=$ALXL_SHA" >> $GITHUB_ENV
+        echo "OLCRTC_SHA=$OLCRTC_SHA" >> $GITHUB_ENV
+        echo "AndroidLibXrayLite=$ALXL_SHA olcrtc=$OLCRTC_SHA"
+
+    - name: Restore cached libv2ray.aar (xray+olcrtc)
+      id: cache-libv2ray-restore
+      uses: actions/cache/restore@v6
+      with:
+        path: ${{ github.workspace }}/aar-out
+        key: libv2ray-olcrtc-v1-${{ runner.os }}-${{ env.ALXL_SHA }}-${{ env.OLCRTC_SHA }}
+
+    - name: Build combined libv2ray.aar (gomobile bind xray + olcrtc)
+      if: steps.cache-libv2ray-restore.outputs.cache-hit != 'true'
+      run: |
+        set -euo pipefail
         export ANDROID_NDK_HOME="$NDK_HOME"
-        GOMOBILE_VER=$(grep 'golang.org/x/mobile' go.mod | awk '{print $2}')
+        WS="${{ github.workspace }}"
+        BUILD_DIR="$WS/libv2ray-build"
+        mkdir -p "$BUILD_DIR/assets" "$WS/aar-out"
+        ln -sfn "$WS/AndroidLibXrayLite/assets/"* "$BUILD_DIR/assets/"
+
+        MOBILE_VER=$(grep 'golang.org/x/mobile' "$WS/olcrtc/go.mod" | awk '{print $2}')
+        cat > "$BUILD_DIR/go.mod" <<EOF
+        module libv2ray
+
+        go 1.26.3
+
+        require (
+            github.com/2dust/AndroidLibXrayLite v0.0.0
+            github.com/openlibrecommunity/olcrtc v0.0.0
+            golang.org/x/mobile $MOBILE_VER
+        )
+
+        replace github.com/2dust/AndroidLibXrayLite => $WS/AndroidLibXrayLite
+
+        replace github.com/openlibrecommunity/olcrtc => $WS/olcrtc
+
+        $(sed -n '/^replace /p' "$WS/AndroidLibXrayLite/go.mod")
+        EOF
+
+        cat > "$BUILD_DIR/imports.go" <<'EOF'
+        package libv2ray
+
+        import (
+            _ "github.com/2dust/AndroidLibXrayLite"
+            _ "github.com/openlibrecommunity/olcrtc/mobile"
+        )
+        EOF
+
+        cd "$BUILD_DIR"
+        go mod tidy
+        echo "---- resolved go.mod ----"
+        cat go.mod
+
+        # gomobile той же версии, что x/mobile в итоговом go.mod (иначе seq-рантайм может разъехаться)
+        GOMOBILE_VER=$(grep -m1 'golang.org/x/mobile' go.mod | awk '{print $2}')
         echo "gomobile: $GOMOBILE_VER  ndk: $ANDROID_NDK_HOME"
         go install golang.org/x/mobile/cmd/gomobile@$GOMOBILE_VER
         go install golang.org/x/mobile/cmd/gobind@$GOMOBILE_VER
         export PATH="$(go env GOPATH)/bin:$PATH"
         gomobile init
-        mkdir -p build
-        gomobile bind -target=android -androidapi 21 -ldflags "-s -w -checklinkname=0" -o build/olcrtc.aar ./mobile
+        go version
+        gomobile version
+
+        gomobile bind \
+          -target=android \
+          -androidapi 24 \
+          -ldflags "-s -w -checklinkname=0 -extldflags=-Wl,-z,max-page-size=16384" \
+          -o "$WS/aar-out/libv2ray.aar" \
+          github.com/2dust/AndroidLibXrayLite \
+          github.com/openlibrecommunity/olcrtc/mobile
+
+        ls -la "$WS/aar-out/"
+        unzip -l "$WS/aar-out/libv2ray.aar" | head -40
+
+    - name: Save cached libv2ray.aar
+      if: steps.cache-libv2ray-restore.outputs.cache-hit != 'true'
+      uses: actions/cache/save@v6
+      with:
+        path: ${{ github.workspace }}/aar-out
+        key: libv2ray-olcrtc-v1-${{ runner.os }}-${{ env.ALXL_SHA }}-${{ env.OLCRTC_SHA }}
+
+    - name: Copy libv2ray.aar into app
+      run: |
         mkdir -p "${{ github.workspace }}/V2rayNG/app/libs"
-        cp build/olcrtc.aar "${{ github.workspace }}/V2rayNG/app/libs/"
+        rm -f "${{ github.workspace }}/V2rayNG/app/libs/olcrtc.aar"
+        cp "${{ github.workspace }}/aar-out/libv2ray.aar" "${{ github.workspace }}/V2rayNG/app/libs/libv2ray.aar"
         ls -la "${{ github.workspace }}/V2rayNG/app/libs/"
     # ===== /SuperNet =====
 
