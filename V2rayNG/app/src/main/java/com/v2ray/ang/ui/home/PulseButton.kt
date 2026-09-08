@@ -4,8 +4,6 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.PowerSettingsNew
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -26,6 +24,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.v2ray.ang.R
@@ -189,7 +188,7 @@ fun HeartbeatButton(
         }
 
         Icon(
-            imageVector = Icons.Filled.PowerSettingsNew,
+            painter = painterResource(R.drawable.ic_sn_power_24dp),
             contentDescription = stringResource(if (connected) R.string.sn_disconnect else R.string.sn_connect),
             tint = gold.copy(alpha = if (connected) 0.92f else 0.78f),
             modifier = Modifier.size(if (connected) 30.dp else 52.dp),
