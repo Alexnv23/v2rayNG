@@ -1,0 +1,75 @@
+name: Build olcRTC AAR
+
+# Ручной запуск: Actions -> "Build olcRTC AAR" -> Run workflow.
+# Собирает olcrtc.aar (gomobile) для встраивания в SuperNet-апп. Гейт 3a.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  aar:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout olcRTC (upstream)
+      uses: actions/checkout@v7
+      with:
+        repository: openlibrecommunity/olcrtc
+        path: olcrtc
+        fetch-depth: 1
+
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v4
+      with:
+        log-accepted-android-sdk-licenses: false
+        cmdline-tools-version: '14742923'
+        packages: 'platforms;android-37.0 build-tools;37.0.0 platform-tools'
+
+    - name: Install NDK
+      run: |
+        echo "y" | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --channel=0 --install "ndk;29.0.14206865"
+        echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/29.0.14206865" >> $GITHUB_ENV
+        echo "NDK_HOME=$ANDROID_HOME/ndk/29.0.14206865" >> $GITHUB_ENV
+
+    - name: Setup Go (version from olcrtc go.mod)
+      uses: actions/setup-go@v5
+      with:
+        go-version-file: olcrtc/go.mod
+        cache: true
+        cache-dependency-path: olcrtc/go.sum
+
+    - name: Install gomobile (pinned to olcrtc go.mod)
+      working-directory: olcrtc
+      run: |
+        GOMOBILE_VER=$(grep 'golang.org/x/mobile' go.mod | awk '{print $2}')
+        echo "gomobile version: $GOMOBILE_VER"
+        go install golang.org/x/mobile/cmd/gomobile@$GOMOBILE_VER
+        go install golang.org/x/mobile/cmd/gobind@$GOMOBILE_VER
+        echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
+
+    - name: gomobile init
+      working-directory: olcrtc
+      run: |
+        gomobile init
+        go version
+        gomobile version
+
+    - name: Build olcrtc.aar
+      working-directory: olcrtc
+      run: |
+        mkdir -p build
+        gomobile bind -target=android -androidapi 21 -ldflags "-s -w -checklinkname=0" -o build/olcrtc.aar ./mobile
+        ls -la build/
+        unzip -l build/olcrtc.aar | head -30
+
+    - name: Upload olcrtc.aar
+      uses: actions/upload-artifact@v7
+      with:
+        name: olcrtc-aar
+        path: |
+          olcrtc/build/olcrtc.aar
+          olcrtc/build/olcrtc-sources.jar
+        if-no-files-found: error
