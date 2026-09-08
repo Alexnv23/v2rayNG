@@ -193,7 +193,7 @@ class MainActivity : HelperBaseComponentActivity() {
                     onOpenLocations = { tab = SnTab.LOCATIONS },
                     onOpenSettings = { tab = SnTab.SETTINGS },
                     onToggleBackupChannel = { toggleBackupChannel() },
-                    onOpenUrl = { url -> Utils.openUri(this, url) },
+                    onOpenUrl = { url -> Utils.openUri(this@MainActivity, url) },
                     onOpenTelegram = { domain -> openTelegram(domain) },
                 )
 
@@ -205,7 +205,7 @@ class MainActivity : HelperBaseComponentActivity() {
 
                 SnTab.FRIENDS -> FriendsScreen(
                     homeViewModel = homeViewModel,
-                    onOpenUrl = { url -> Utils.openUri(this, url) },
+                    onOpenUrl = { url -> Utils.openUri(this@MainActivity, url) },
                     onShareText = { text -> shareText(text) },
                 )
 
@@ -219,7 +219,7 @@ class MainActivity : HelperBaseComponentActivity() {
                     onOpenPerApp = { openPerAppProxy() },
                     onBypassLanChange = { enabled ->
                         homeViewModel.setBypassLan(enabled)
-                        LauncherManager.restartService(this)
+                        LauncherManager.restartService(this@MainActivity)
                     },
                     onOpenLogcat = { navigateTo(MainDestination.Logcat) },
                     onOpenAdvancedSettings = { navigateTo(MainDestination.Settings) },
