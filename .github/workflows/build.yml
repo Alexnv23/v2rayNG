@@ -94,7 +94,7 @@ jobs:
       uses: actions/cache/restore@v6
       with:
         path: ${{ github.workspace }}/aar-out
-        key: libv2ray-olcrtc-v1-${{ runner.os }}-${{ env.ALXL_SHA }}-${{ env.OLCRTC_SHA }}
+        key: libv2ray-olcrtc-v2-${{ runner.os }}-${{ env.ALXL_SHA }}-${{ env.OLCRTC_SHA }}
 
     - name: Build combined libv2ray.aar (gomobile bind xray + olcrtc)
       if: steps.cache-libv2ray-restore.outputs.cache-hit != 'true'
@@ -104,7 +104,19 @@ jobs:
         WS="${{ github.workspace }}"
         BUILD_DIR="$WS/libv2ray-build"
         mkdir -p "$BUILD_DIR/assets" "$WS/aar-out"
-        ln -sfn "$WS/AndroidLibXrayLite/assets/"* "$BUILD_DIR/assets/"
+
+        # Гео-базы: ровно те же три файла, что качает 2dust перед сборкой своего AAR.
+        # Без geoip-only-cn-private.dat xray падает на правиле "private -> direct".
+        ASSETS="$WS/AndroidLibXrayLite/assets"
+        mkdir -p "$ASSETS"
+        curl -fsSL https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat -o "$ASSETS/geoip.dat"
+        curl -fsSL https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat -o "$ASSETS/geosite.dat"
+        curl -fsSL https://raw.githubusercontent.com/Loyalsoldier/geoip/release/geoip-only-cn-private.dat -o "$ASSETS/geoip-only-cn-private.dat"
+        ls -la "$ASSETS"
+        for f in geoip.dat geosite.dat geoip-only-cn-private.dat; do
+          test -s "$ASSETS/$f" || { echo "ASSET MISSING: $f"; exit 1; }
+        done
+        ln -sfn "$ASSETS/"* "$BUILD_DIR/assets/"
 
         MOBILE_VER=$(grep 'golang.org/x/mobile' "$WS/olcrtc/go.mod" | awk '{print $2}')
         cat > "$BUILD_DIR/go.mod" <<EOF
@@ -158,14 +170,19 @@ jobs:
           github.com/openlibrecommunity/olcrtc/mobile
 
         ls -la "$WS/aar-out/"
-        unzip -l "$WS/aar-out/libv2ray.aar" | head -40
+        unzip -l "$WS/aar-out/libv2ray.aar" | grep -E 'assets/|\.so$|classes\.jar' || true
+        # Жёсткая проверка: все три гео-базы обязаны лежать в AAR, иначе апп не стартует
+        for f in geoip.dat geosite.dat geoip-only-cn-private.dat; do
+          unzip -l "$WS/aar-out/libv2ray.aar" | grep -q "assets/$f" || { echo "AAR MISSING assets/$f"; exit 1; }
+        done
+        echo "AAR OK: xray+olcrtc + 3 geo assets"
 
     - name: Save cached libv2ray.aar
       if: steps.cache-libv2ray-restore.outputs.cache-hit != 'true'
       uses: actions/cache/save@v6
       with:
         path: ${{ github.workspace }}/aar-out
-        key: libv2ray-olcrtc-v1-${{ runner.os }}-${{ env.ALXL_SHA }}-${{ env.OLCRTC_SHA }}
+        key: libv2ray-olcrtc-v2-${{ runner.os }}-${{ env.ALXL_SHA }}-${{ env.OLCRTC_SHA }}
 
     - name: Copy libv2ray.aar into app
       run: |
