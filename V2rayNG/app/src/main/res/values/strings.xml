@@ -169,14 +169,14 @@
     <string name="title_settings">Settings</string>
     <string name="title_advanced">Advanced Settings</string>
     <string name="title_core_settings">Core Settings</string>
-    <string name="title_vpn_settings">VPN Settings</string>
+    <string name="title_vpn_settings">Connection settings</string>
     <string name="title_pref_per_app_proxy">Per-app proxy</string>
     <string name="summary_pref_per_app_proxy">General: checked apps use the proxy, and unchecked apps connect directly;\nBypass mode: checked apps connect directly, and unchecked apps use the proxy.\nThe option to automatically select apps that should use the proxy is in the menu.</string>
     <string name="title_pref_is_booted">Connect after device boot</string>
     <string name="summary_pref_is_booted">Automatically connect to the selected server after the device starts. Android may restrict background starts.</string>
-    <string name="title_system_vpn_settings">System VPN settings</string>
-    <string name="summary_system_vpn_settings">Open Android VPN settings to configure Always-on VPN, if supported by this device.</string>
-    <string name="toast_system_vpn_settings_unavailable">System VPN settings are unavailable.</string>
+    <string name="title_system_vpn_settings">System connection settings</string>
+    <string name="summary_system_vpn_settings">Open Android system settings to configure an always-on connection, if supported by this device.</string>
+    <string name="toast_system_vpn_settings_unavailable">System connection settings are unavailable.</string>
 
 
     <string name="subscription_updater_job_tips">The task will run in the background, and progress information will be displayed in the notification.</string>
@@ -214,7 +214,7 @@
     <string name="summary_pref_fake_dns_enabled">FakeDNS returns synthetic IP addresses for domain lookups (faster, but may not work with some apps).</string>
 
     <string name="title_pref_ipv6_enabled">Enable IPv6</string>
-    <string name="summary_pref_ipv6_enabled">Add IPv6 address and routes to the VPN interface</string>
+    <string name="summary_pref_ipv6_enabled">Add IPv6 address and routes to the tunnel interface</string>
 
     <string name="title_pref_prefer_ipv6">Prefer IPv6</string>
     <string name="summary_pref_prefer_ipv6">Prefer IPv6 addresses when resolving domain names</string>
@@ -222,12 +222,12 @@
     <string name="title_pref_remote_dns">Remote DNS (UDP/TCP/HTTPS/QUIC, optional)</string>
     <string name="summary_pref_remote_dns" translatable="false">DNS</string>
 
-    <string name="title_pref_vpn_dns">VPN DNS (IPv4/IPv6 only)</string>
-    <string name="title_pref_vpn_bypass_lan">Bypass LAN in VPN mode</string>
+    <string name="title_pref_vpn_dns">Tunnel DNS (IPv4/IPv6 only)</string>
+    <string name="title_pref_vpn_bypass_lan">Bypass LAN in tunnel mode</string>
 
-    <string name="title_pref_vpn_interface_address">VPN Interface Address</string>
+    <string name="title_pref_vpn_interface_address">Tunnel interface address</string>
 
-    <string name="title_pref_vpn_mtu">VPN MTU (default 1500)</string>
+    <string name="title_pref_vpn_mtu">Tunnel MTU (default 1500)</string>
 
 
     <string name="title_pref_domestic_dns">Direct DNS (optional)</string>
@@ -267,7 +267,7 @@
     <string name="summary_pref_confirm_remove">Whether deleting a config requires a second confirmation by the user</string>
 
 
-    <string name="title_pref_append_http_proxy">Add HTTP proxy to VPN</string>
+    <string name="title_pref_append_http_proxy">Add HTTP proxy to tunnel</string>
     <string name="summary_pref_append_http_proxy">Allow browsers and supported apps to use the HTTP proxy directly instead of the virtual network interface (Android 10+).</string>
 
     <string name="title_pref_double_column_display">Use two-column layout</string>
@@ -310,10 +310,10 @@
     <string name="title_pref_hev_tunnel_rw_timeout">Hev TUN read/write timeout (seconds; TCP/UDP defaults: 300/60)</string>
     <string name="title_mode_settings">Mode Settings</string>
     <string name="title_root_mode_enabled">Enable root mode (root users)</string>
-    <string name="summary_root_mode_enabled">Use root access for low-level transparent proxying. Root mode handles network traffic directly instead of using the Android VPN service. Standard mode, per-app routing, and VPN-related settings do not apply while root mode is enabled.</string>
+    <string name="summary_root_mode_enabled">Use root access for low-level transparent proxying. Root mode handles network traffic directly instead of using the Android system tunnel service. Standard mode, per-app routing, and tunnel-related settings do not apply while root mode is enabled.</string>
     <string name="toast_root_required">Root access is required for this feature</string>
-    <string name="title_root_lan_sharing">Share VPN with LAN / tethered devices (root users)</string>
-    <string name="summary_root_lan_sharing">Route traffic from Wi-Fi hotspot and USB-tethered devices through the VPN.</string>
+    <string name="title_root_lan_sharing">Share connection with LAN / tethered devices (root users)</string>
+    <string name="summary_root_lan_sharing">Route traffic from Wi-Fi hotspot and USB-tethered devices through the tunnel.</string>
 
     <string name="title_logcat" translatable="false">Logcat</string>
     <string name="logcat_copy">Copy</string>
@@ -464,7 +464,7 @@
     <string name="share_subscription_clipboard">Export to clipboard</string>
 
     <string-array name="mode_entries">
-        <item>VPN</item>
+        <item>Tunnel</item>
         <item>Proxy only</item>
     </string-array>
 
@@ -550,5 +550,27 @@
     <string name="tasker_blurb_stop">Stop %1$s</string>
     <string name="connection_test_empty_message">no details available</string>
     <string name="value_unknown">unknown</string>
-
+    <!-- SuperNet: shell (home screen) -->
+    <string name="sn_connect">Connect</string>
+    <string name="sn_disconnect">Disconnect</string>
+    <string name="sn_status_connected">Connected</string>
+    <string name="sn_status_disconnected">Disconnected</string>
+    <string name="sn_status_protected">protected</string>
+    <string name="sn_status_tap_to_connect">tap to connect</string>
+    <string name="sn_hello_name">Hi, %1$s!</string>
+    <string name="sn_premium_access">premium access</string>
+    <string name="sn_choose_location">Choose location</string>
+    <string name="sn_location_tap_hint">tap to change location</string>
+    <string name="sn_location_backup_hint">backup channel · messengers and sites</string>
+    <string name="sn_stat_access">ACCESS</string>
+    <string name="sn_stat_days">days</string>
+    <string name="sn_stat_white_limit">WHITE LIMIT</string>
+    <string name="sn_stat_of_gb">of %1$s GB</string>
+    <string name="sn_quick_cabinet">Account</string>
+    <string name="sn_quick_telegram">Telegram</string>
+    <string name="sn_quick_faq">FAQ</string>
+    <string name="sn_quick_support">Support</string>
+    <string name="sn_backup_channel">Backup channel</string>
+    <string name="sn_backup_channel_active">Backup channel on · tap to switch back</string>
+    <string name="sn_backup_channel_unavailable">Backup channel will appear in your subscription</string>
 </resources>

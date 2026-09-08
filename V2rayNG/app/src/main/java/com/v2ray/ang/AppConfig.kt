@@ -75,6 +75,8 @@ object AppConfig {
     const val PREF_IP_API_URL = "pref_ip_api_url"
     const val PREF_LOGLEVEL = "pref_core_loglevel"
     // SuperNet: запасной канал olcRTC
+    /** SuperNet: последний обычный (не olcRTC) профиль — чтобы вернуться из «Запасного канала». */
+    const val PREF_SN_LAST_NORMAL_GUID = "pref_sn_last_normal_guid"
     const val PREF_OLCRTC_DNS = "pref_olcrtc_dns"
     const val DNS_OLCRTC_FALLBACK = "1.1.1.1:53"
     const val PORT_OLCRTC_SOCKS = "10809"

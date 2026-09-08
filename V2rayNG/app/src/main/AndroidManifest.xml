@@ -198,6 +198,7 @@
                 <data android:scheme="supernet" />
                 <data android:host="install-config" />
                 <data android:host="install-sub" />
+                <data android:host="subscription" />
             </intent-filter>
         </activity>
         <activity

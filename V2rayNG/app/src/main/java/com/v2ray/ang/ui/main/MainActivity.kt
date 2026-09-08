@@ -9,6 +9,11 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import com.v2ray.ang.AngApplication
 import com.v2ray.ang.AppConfig
@@ -28,6 +33,8 @@ import com.v2ray.ang.ui.AboutActivity
 import com.v2ray.ang.ui.backup.BackupActivity
 import com.v2ray.ang.ui.base.HelperBaseComponentActivity
 import com.v2ray.ang.ui.checkupdate.CheckUpdateActivity
+import com.v2ray.ang.ui.home.HomeScreen
+import com.v2ray.ang.ui.home.HomeViewModel
 import com.v2ray.ang.ui.logcat.LogcatActivity
 import com.v2ray.ang.ui.perappproxy.PerAppProxyActivity
 import com.v2ray.ang.ui.routing.RoutingSettingActivity
@@ -57,6 +64,9 @@ class MainActivity : HelperBaseComponentActivity() {
     private val mainViewModel: MainViewModel by viewModels {
         MainViewModel.Factory(application, MainRepository(application as AngApplication))
     }
+
+    /** SuperNet: состояние главного экрана-оболочки. */
+    private val homeViewModel: HomeViewModel by viewModels()
 
     private val requestVpnPermission =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
@@ -99,7 +109,27 @@ class MainActivity : HelperBaseComponentActivity() {
 
     @Composable
     override fun ScreenContent() {
-        BackHandler { moveTaskToBack(false) }
+        // SuperNet: главная — наша оболочка; список профилей v2rayNG живёт на странице «Локации».
+        var showLocations by rememberSaveable { mutableStateOf(false) }
+        val uiState by mainViewModel.uiState.collectAsStateWithLifecycle()
+
+        if (!showLocations) {
+            BackHandler { moveTaskToBack(false) }
+            HomeScreen(
+                homeViewModel = homeViewModel,
+                selectedGuid = uiState.selectedGuid,
+                isRunning = uiState.isRunning,
+                onToggleService = { handleFabAction() },
+                onOpenLocations = { showLocations = true },
+                onOpenSettings = { navigateTo(MainDestination.Settings) },
+                onToggleBackupChannel = { toggleBackupChannel() },
+                onOpenUrl = { url -> Utils.openUri(this, url) },
+                onOpenTelegram = { domain -> openTelegram(domain) },
+            )
+            return
+        }
+
+        BackHandler { showLocations = false }
         MainScreen(
             mainViewModel = mainViewModel,
             onAction = { action ->
@@ -156,6 +186,33 @@ class MainActivity : HelperBaseComponentActivity() {
             }
         }
         settingsActivityLauncher.launch(intent)
+    }
+
+    /** SuperNet «Запасной канал»: переключить выбранный профиль на olcRTC и обратно, поднять сервис. */
+    private fun toggleBackupChannel() {
+        lifecycleScope.launch {
+            val target = mainViewModel.resolveBackupChannelTarget()
+            if (target == null) {
+                toast(R.string.sn_backup_channel_unavailable)
+                return@launch
+            }
+            val wasRunning = mainViewModel.uiState.value.isRunning
+            setSelectServer(target)
+            homeViewModel.onSelectionChanged(target)
+            if (!wasRunning) requestServiceStart()
+        }
+    }
+
+    /** Открыть само приложение Telegram (tg://), при отсутствии — https-ссылку. */
+    private fun openTelegram(domain: String) {
+        try {
+            startActivity(
+                Intent(Intent.ACTION_VIEW, android.net.Uri.parse("tg://resolve?domain=$domain"))
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            )
+        } catch (_: Exception) {
+            Utils.openUri(this, "https://t.me/$domain")
+        }
     }
 
     private fun handleFabAction() {
@@ -275,6 +332,13 @@ class MainActivity : HelperBaseComponentActivity() {
             mainViewModel.updateSelectedGuid(guid)
             LauncherManager.restartService(this)
         }
+    }
+
+    /** SuperNet: после deeplink-импорта (singleTask) подтянуть новые группы/выбор без пересоздания. */
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        mainViewModel.onAction(MainAction.RefreshGroups)
+        homeViewModel.refreshStats()
     }
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {

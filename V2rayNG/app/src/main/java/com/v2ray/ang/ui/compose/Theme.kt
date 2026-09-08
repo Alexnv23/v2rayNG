@@ -65,41 +65,50 @@ private val LightColor = lightColorScheme(
 )
 
 private val DarkColor = darkColorScheme(
-    primary = Color(0xFFC0C0C0), // Silver Gray
-    onPrimary = Color(0xFF303030), // Dark Gray
-    primaryContainer = Color(0xFF474747), // Gray
-    onPrimaryContainer = Color(0xFFE0E0E0), // Light Gray
-    secondary = Color(0xFFf97910), // Orange
-    onSecondary = Color(0xFF4E2600), // Dark Brown
-    secondaryContainer = Color(0xFF6F3800), // Brown
-    onSecondaryContainer = Color(0xFFFFE8D6), // Pale Orange
-    tertiary = Color(0xFF83D6B5), // Mint Green
-    onTertiary = Color(0xFF00382E), // Dark Teal
-    tertiaryContainer = Color(0xFF005143), // Teal
-    onTertiaryContainer = Color(0xFFA0F2D0), // Light Green
-    error = Color(0xFFFFB4AB), // Light Red
-    errorContainer = Color(0xFF93000A), // Dark Red
-    onError = Color(0xFF690005), // Deep Red
-    onErrorContainer = Color(0xFFFFDAD6), // Light Red
-    background = Color(0xFF1C1B1F), // Near Black
-    onBackground = Color(0xFFE6E1E5), // Light Gray
-    surface = Color(0xFF1C1B1F), // Near Black
-    onSurface = Color(0xFFE6E1E5), // Light Gray
-    surfaceVariant = Color(0xFF49454F), // Dark Gray
-    onSurfaceVariant = Color(0xFFCAC4D0), // Light Gray
-    outline = Color(0xFF938F99), // Grayish Purple
-    outlineVariant = Color(0xFF49454F), // Dark Gray
-    inverseSurface = Color(0xFFE6E1E5), // Light Gray
-    inverseOnSurface = Color(0xFF1C1B1F), // Near Black
-    inversePrimary = Color(0xFF000000), // Black
-    scrim = Color(0xFF000000), // Black
-    surfaceTint = Color(0xFFC0C0C0), // Silver Gray
-    surfaceContainerLowest = Color(0xFF0F0F12), // Near Black
-    surfaceContainerLow = Color(0xFF1A191D), // Dark Gray
-    surfaceContainer = Color(0xFF1E1D21), // Dark Gray
-    surfaceContainerHigh = Color(0xFF282729), // Dark Gray
-    surfaceContainerHighest = Color(0xFF333234), // Dark Gray
+    primary = Color(0xFFD9B95C), // SN gold
+    onPrimary = Color(0xFF1A1405), // Near black on gold
+    primaryContainer = Color(0xFF3A2E10), // Deep gold-brown
+    onPrimaryContainer = Color(0xFFF2DC93), // Light gold
+    secondary = Color(0xFFD9B95C), // SN gold
+    onSecondary = Color(0xFF1A1405),
+    secondaryContainer = Color(0xFF2A2312),
+    onSecondaryContainer = Color(0xFFF2DC93),
+    tertiary = Color(0xFF6FCF97), // Green ok
+    onTertiary = Color(0xFF00382E),
+    tertiaryContainer = Color(0xFF0F3324),
+    onTertiaryContainer = Color(0xFFA0F2D0),
+    error = Color(0xFFFFB4AB),
+    errorContainer = Color(0xFF93000A),
+    onError = Color(0xFF690005),
+    onErrorContainer = Color(0xFFFFDAD6),
+    background = Color(0xFF0A0908), // SN black
+    onBackground = Color(0xFFEDE6D6), // Warm light
+    surface = Color(0xFF0A0908), // SN black
+    onSurface = Color(0xFFEDE6D6),
+    surfaceVariant = Color(0xFF2A2620),
+    onSurfaceVariant = Color(0xFFB8AE97), // Muted warm gray
+    outline = Color(0xFF7A6F58),
+    outlineVariant = Color(0xFF3A3427),
+    inverseSurface = Color(0xFFEDE6D6),
+    inverseOnSurface = Color(0xFF0A0908),
+    inversePrimary = Color(0xFF6E5A22),
+    scrim = Color(0xFF000000),
+    surfaceTint = Color(0xFFD9B95C),
+    surfaceContainerLowest = Color(0xFF050403),
+    surfaceContainerLow = Color(0xFF100E0B),
+    surfaceContainer = Color(0xFF15130F), // SN card bg
+    surfaceContainerHigh = Color(0xFF1C1914),
+    surfaceContainerHighest = Color(0xFF242019),
 )
+
+// ── SuperNet brand (чёрное + золото; #0a0908 / #d9b95c) ──
+val SnBlack = Color(0xFF0A0908)
+val SnGold = Color(0xFFD9B95C)
+val SnGoldDim = Color(0xFF8A6E2A)
+val SnGoldLight = Color(0xFFF2DC93)
+val SnCardBg = Color(0xFF15130F)
+val SnCardBorder = Color(0x33D9B95C)
+val SnGreenOk = Color(0xFF6FCF97)
 
 // Semantic Colors
 val colorPing = Color(0xFF009966) // Green
@@ -163,19 +172,11 @@ val LocalDarkTheme = compositionLocalOf { false }
 
 @Composable
 fun AppTheme(
-    darkTheme: Boolean = resolveDarkTheme(),
+    // SuperNet: бренд — всегда чёрно-золотая тёмная тема; светлая и dynamic color отключены намеренно.
+    darkTheme: Boolean = true,
     content: @Composable () -> Unit
 ) {
-    val dynamicColor by ThemeManager.dynamicColorEnabled.collectAsState()
-    val context = LocalContext.current
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
-
-        darkTheme -> DarkColor
-        else -> LightColor
-    }
+    val colorScheme = DarkColor
     val snackbarController = rememberAppSnackbarController()
 
     val view = LocalView.current

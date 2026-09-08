@@ -13,6 +13,8 @@ import com.v2ray.ang.dto.TestServiceMessage
 import com.v2ray.ang.dto.entities.ProfileItem
 import com.v2ray.ang.dto.entities.ServersCache
 import com.v2ray.ang.dto.entities.SubscriptionCache
+import com.v2ray.ang.enums.EConfigType
+import com.v2ray.ang.handler.MmkvManager
 import com.v2ray.ang.extension.delay
 import com.v2ray.ang.extension.isComplexType
 import com.v2ray.ang.extension.matchesPattern
@@ -685,6 +687,29 @@ class MainViewModel(
 
     fun refreshSelectedGuid() {
         _uiState.update { it.copy(selectedGuid = dataSource.getSelectServer()) }
+    }
+
+    /**
+     * SuperNet «Запасной канал»: какой профиль выбрать при нажатии кнопки.
+     * Сейчас выбран OLCRTC → вернуть последний обычный профиль (или первый не-OLCRTC).
+     * Иначе → запомнить текущий как «обычный» и вернуть OLCRTC-профиль.
+     * null = запасного канала в подписке нет.
+     */
+    suspend fun resolveBackupChannelTarget(): String? = withContext(ioDispatcher) {
+        val all = dataSource.getServerGuidList("")
+        val selected = uiState.value.selectedGuid
+        val selectedIsBackup = selected?.let { dataSource.decodeServerConfig(it)?.configType } == EConfigType.OLCRTC
+        if (selectedIsBackup) {
+            val last = MmkvManager.decodeSettingsString(AppConfig.PREF_SN_LAST_NORMAL_GUID)
+            if (!last.isNullOrBlank() && all.contains(last) &&
+                dataSource.decodeServerConfig(last)?.configType != EConfigType.OLCRTC
+            ) return@withContext last
+            return@withContext all.firstOrNull { dataSource.decodeServerConfig(it)?.configType != EConfigType.OLCRTC }
+        }
+        val backup = all.firstOrNull { dataSource.decodeServerConfig(it)?.configType == EConfigType.OLCRTC }
+            ?: return@withContext null
+        if (!selected.isNullOrBlank()) MmkvManager.encodeSettings(AppConfig.PREF_SN_LAST_NORMAL_GUID, selected)
+        backup
     }
 
     fun removeServerAndRefresh(guid: String) {

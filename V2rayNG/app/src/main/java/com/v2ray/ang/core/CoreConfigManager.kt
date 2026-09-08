@@ -618,7 +618,11 @@ object CoreConfigManager {
      * Configure local DNS inbounds, outbounds, and routing rules.
      */
     private fun configureLocalDns(configContext: CoreConfigContext, v2rayConfig: V2rayConfig) {
-        if (MmkvManager.decodeSettingsBool(AppConfig.PREF_LOCAL_DNS_ENABLED) != true) {
+        // SuperNet: olcRTC-туннель = SOCKS только CONNECT (TCP), UDP не носит. Сырой UDP-DNS через него
+        // молча теряется → всё, что резолвит имена, виснет (факт по логу 08.09). Для OLCRTC-профиля
+        // порт 53 всегда заворачиваем в DNS-модуль ядра (DoH по TCP), независимо от тумблера.
+        val primaryIsOlcrtc = configContext.resolvedOutbounds.firstOrNull()?.profile?.configType == EConfigType.OLCRTC
+        if (MmkvManager.decodeSettingsBool(AppConfig.PREF_LOCAL_DNS_ENABLED) != true && !primaryIsOlcrtc) {
             return
         }
 

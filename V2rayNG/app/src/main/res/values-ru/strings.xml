@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name" translatable="false">v2rayNG</string>
+    <string name="app_name" translatable="false">SuperNet</string>
     <string name="app_widget_name">v2rayNG</string>
     <string name="app_tile_name">v2rayNG</string>
     <string name="app_tile_first_use">Добавьте профиль в приложении перед использованием этой функции.</string>
@@ -169,14 +169,14 @@
     <string name="title_settings">Настройки</string>
     <string name="title_advanced">Расширенные настройки</string>
     <string name="title_core_settings">Настройки ядра</string>
-    <string name="title_vpn_settings">Настройки VPN</string>
+    <string name="title_vpn_settings">Настройки подключения</string>
     <string name="title_pref_per_app_proxy">Прокси для выбранных приложений</string>
     <string name="summary_pref_per_app_proxy">Основной: выбранное приложение соединяется через прокси, не выбранное — напрямую;\nРежим обхода: выбранное приложение соединяется напрямую, не выбранное — через прокси.\nВ меню можно автоматически выбрать приложения, которые должны использовать прокси.</string>
     <string name="title_pref_is_booted">Подключаться после загрузки устройства</string>
     <string name="summary_pref_is_booted">Автоматически подключаться к выбранному серверу после загрузки устройства. Android может ограничивать запуск в фоне.</string>
-    <string name="title_system_vpn_settings">Системные настройки VPN</string>
-    <string name="summary_system_vpn_settings">Открыть настройки VPN в Android для включения постоянного VPN-подключения, если устройство его поддерживает.</string>
-    <string name="toast_system_vpn_settings_unavailable">Системные настройки VPN недоступны.</string>
+    <string name="title_system_vpn_settings">Системные настройки подключения</string>
+    <string name="summary_system_vpn_settings">Открыть системные настройки Android, чтобы включить постоянное подключение, если устройство это поддерживает.</string>
+    <string name="toast_system_vpn_settings_unavailable">Системные настройки подключения недоступны.</string>
 
 
     <string name="subscription_updater_job_tips">Задача будет выполняться в фоновом режиме, информация о ходе выполнения будет отображаться в уведомлении.</string>
@@ -214,7 +214,7 @@
     <string name="summary_pref_fake_dns_enabled">FakeDNS возвращает виртуальные IP-адреса при разрешении доменов (быстрее, но может не работать с некоторыми приложениями).</string>
 
     <string name="title_pref_ipv6_enabled">Включить IPv6</string>
-    <string name="summary_pref_ipv6_enabled">Добавить IPv6-адрес и маршруты в VPN-интерфейс</string>
+    <string name="summary_pref_ipv6_enabled">Добавить IPv6-адрес и маршруты в интерфейс подключения</string>
 
     <string name="title_pref_prefer_ipv6">Предпочитать IPv6</string>
     <string name="summary_pref_prefer_ipv6">Предпочитать IPv6-адреса при определении доменных имён</string>
@@ -222,12 +222,12 @@
     <string name="title_pref_remote_dns">Удалённый DNS (UDP/TCP/HTTPS/QUIC) (необязательно)</string>
     <string name="summary_pref_remote_dns" translatable="false">DNS</string>
 
-    <string name="title_pref_vpn_dns">VPN DNS (только IPv4/IPv6)</string>
-    <string name="title_pref_vpn_bypass_lan">VPN обходит LAN</string>
+    <string name="title_pref_vpn_dns">DNS подключения (только IPv4/IPv6)</string>
+    <string name="title_pref_vpn_bypass_lan">Подключение обходит LAN</string>
 
-    <string name="title_pref_vpn_interface_address">Адрес интерфейса VPN</string>
+    <string name="title_pref_vpn_interface_address">Адрес интерфейса подключения</string>
 
-    <string name="title_pref_vpn_mtu">VPN MTU (по умолчанию 1500)</string>
+    <string name="title_pref_vpn_mtu">MTU подключения (по умолчанию 1500)</string>
 
 
     <string name="title_pref_domestic_dns">DNS для прямых подключений (необязательно)</string>
@@ -267,7 +267,7 @@
     <string name="summary_pref_confirm_remove">Обязательное подтверждение удаления профиля</string>
 
 
-    <string name="title_pref_append_http_proxy">Добавить HTTP-прокси в VPN</string>
+    <string name="title_pref_append_http_proxy">Добавить HTTP-прокси в подключение</string>
     <string name="summary_pref_append_http_proxy">Браузеры и поддерживаемые приложения смогут использовать HTTP-прокси напрямую, минуя виртуальный сетевой адаптер (Android 10+).</string>
 
     <string name="title_pref_double_column_display">Профили в два столбца</string>
@@ -310,10 +310,10 @@
     <string name="title_pref_hev_tunnel_rw_timeout">Тайм-аут чтения/записи Hev TUN (секунды; значения TCP/UDP по умолчанию: 300/60)</string>
     <string name="title_mode_settings">Настройки режима</string>
     <string name="title_root_mode_enabled">Использовать root-режим</string>
-    <string name="summary_root_mode_enabled">Использовать root-доступ для низкоуровневого прозрачного проксирования. Root-режим управляет сетевым трафиком напрямую вместо службы VPN Android. Пока он включён, обычный режим, маршрутизация отдельных приложений и связанные настройки VPN не действуют.</string>
+    <string name="summary_root_mode_enabled">Использовать root-доступ для низкоуровневого прозрачного проксирования. Root-режим управляет сетевым трафиком напрямую вместо системной службы подключения Android. Пока он включён, обычный режим, маршрутизация отдельных приложений и связанные настройки подключения не действуют.</string>
     <string name="toast_root_required">Для этой функции требуется доступ с правами root</string>
-    <string name="title_root_lan_sharing">Доступ к VPN для устройств LAN/точки доступа (root)</string>
-    <string name="summary_root_lan_sharing">Направлять через VPN трафик устройств, подключённых к точке доступа Wi-Fi или по USB.</string>
+    <string name="title_root_lan_sharing">Доступ к подключению для устройств LAN/точки доступа (root)</string>
+    <string name="summary_root_lan_sharing">Направлять через подключение трафик устройств, подключённых к точке доступа Wi-Fi или по USB.</string>
 
     <string name="title_logcat" translatable="false">Logcat</string>
     <string name="logcat_copy">Копировать</string>
@@ -464,7 +464,7 @@
     <string name="share_subscription_clipboard">Экспорт в буфер обмена</string>
 
     <string-array name="mode_entries">
-        <item>VPN</item>
+        <item>Подключение (туннель)</item>
         <item>Прокси</item>
     </string-array>
 
@@ -550,5 +550,27 @@
     <string name="tasker_blurb_stop">Остановить %1$s</string>
     <string name="connection_test_empty_message">подробности отсутствуют</string>
     <string name="value_unknown">неизвестно</string>
-
+    <!-- SuperNet: оболочка (главный экран) -->
+    <string name="sn_connect">Подключить</string>
+    <string name="sn_disconnect">Отключить</string>
+    <string name="sn_status_connected">Подключено</string>
+    <string name="sn_status_disconnected">Отключено</string>
+    <string name="sn_status_protected">защищено</string>
+    <string name="sn_status_tap_to_connect">нажмите, чтобы подключиться</string>
+    <string name="sn_hello_name">Привет, %1$s!</string>
+    <string name="sn_premium_access">премиум-доступ</string>
+    <string name="sn_choose_location">Выбрать локацию</string>
+    <string name="sn_location_tap_hint">нажмите, чтобы сменить локацию</string>
+    <string name="sn_location_backup_hint">запасной канал · мессенджеры и сайты</string>
+    <string name="sn_stat_access">ДОСТУП</string>
+    <string name="sn_stat_days">дней</string>
+    <string name="sn_stat_white_limit">БЕЛЫЙ ЛИМИТ</string>
+    <string name="sn_stat_of_gb">из %1$s ГБ</string>
+    <string name="sn_quick_cabinet">Кабинет</string>
+    <string name="sn_quick_telegram">Telegram</string>
+    <string name="sn_quick_faq">Вопросы</string>
+    <string name="sn_quick_support">Поддержка</string>
+    <string name="sn_backup_channel">Запасной канал</string>
+    <string name="sn_backup_channel_active">Запасной канал включён · нажмите, чтобы вернуться</string>
+    <string name="sn_backup_channel_unavailable">Запасной канал появится в вашей подписке</string>
 </resources>
