@@ -27,6 +27,7 @@ object CoreOutboundBuilder {
             EConfigType.VMESS -> toOutboundVmess(profileItem)
             EConfigType.SHADOWSOCKS -> toOutboundShadowsocks(profileItem)
             EConfigType.SOCKS -> toOutboundSocks(profileItem)
+            EConfigType.OLCRTC -> toOutboundOlcrtc(profileItem)
             EConfigType.VLESS -> toOutboundVless(profileItem)
             EConfigType.TROJAN -> toOutboundTrojan(profileItem)
             EConfigType.WIREGUARD -> toOutboundWireguard(profileItem)
@@ -216,6 +217,17 @@ object CoreOutboundBuilder {
             }
         }
 
+        return outboundBean
+    }
+
+    /** SuperNet: olcRTC = SOCKS на loopback, где слушает OlcrtcManager. */
+    private fun toOutboundOlcrtc(profileItem: ProfileItem): OutboundBean? {
+        val outboundBean = createInitOutbound(EConfigType.SOCKS) ?: return null
+        outboundBean.settings?.let { settings ->
+            settings.address = AppConfig.LOOPBACK
+            settings.port = (profileItem.serverPort ?: AppConfig.PORT_OLCRTC_SOCKS).toInt()
+            settings.level = AppConfig.DEFAULT_LEVEL
+        }
         return outboundBean
     }
 

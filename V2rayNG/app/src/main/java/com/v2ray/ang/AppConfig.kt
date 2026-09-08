@@ -74,6 +74,11 @@ object AppConfig {
     const val PREF_DELAY_TEST_URL = "pref_delay_test_url"
     const val PREF_IP_API_URL = "pref_ip_api_url"
     const val PREF_LOGLEVEL = "pref_core_loglevel"
+    // SuperNet: запасной канал olcRTC
+    const val PREF_OLCRTC_DNS = "pref_olcrtc_dns"
+    const val DNS_OLCRTC_FALLBACK = "1.1.1.1:53"
+    const val PORT_OLCRTC_SOCKS = "10809"
+    const val OLCRTC = "olcrtc://"
     const val PREF_OUTBOUND_DOMAIN_RESOLVE_METHOD = "pref_outbound_domain_resolve_method"
     const val PREF_MODE = "pref_mode"
     const val PREF_ROOT_MODE_ENABLE = "pref_root_mode_enabled"

@@ -21,6 +21,7 @@ import com.v2ray.ang.enums.BrowserDialerMode
 import com.v2ray.ang.extension.delay
 import com.v2ray.ang.extension.isNotNullEmpty
 import com.v2ray.ang.handler.MmkvManager
+import com.v2ray.ang.enums.EConfigType
 import com.v2ray.ang.handler.NotificationManager
 import com.v2ray.ang.handler.SettingsManager
 import com.v2ray.ang.handler.SpeedtestManager
@@ -125,6 +126,15 @@ object CoreServiceManager {
         val config = MmkvManager.decodeServerConfig(guid) ?: error("Failed to decode server config")
 
         LogUtil.i(AppConfig.TAG, "StartCore-Manager: Starting core loop for ${config.remarks}")
+        // SuperNet: запасной канал olcRTC — поднять транспорт до генерации конфига
+        if (config.configType == EConfigType.OLCRTC) {
+            LogUtil.w(AppConfig.TAG, "StartCore-Manager: OLCRTC config, starting olcRTC carrier=${config.olcrtcCarrier} transport=${config.olcrtcTransport} room=${config.olcrtcRoomId}")
+            OlcrtcManager.socketProtector = serviceControl?.get()?.let { sc -> { fd -> sc.vpnProtect(fd) } }
+            if (!OlcrtcManager.start(service, config)) {
+                error("Failed to start olcRTC")
+            }
+            MmkvManager.encodeServerConfig(guid, config)
+        }
         val result = CoreConfigManager.getV2rayConfig(service, guid)
         LogUtil.d(AppConfig.TAG, result.content)
         if (!result.status) {
@@ -205,6 +215,12 @@ object CoreServiceManager {
         if (browserDialer != null) {
             browserDialer!!.stop()
             browserDialer = null
+        }
+
+        // SuperNet: остановить olcRTC, если он был активен
+        if (currentConfig?.configType == EConfigType.OLCRTC) {
+            OlcrtcManager.stop()
+            OlcrtcManager.socketProtector = null
         }
 
         MessageHelper.sendMsg2UI(service, AppConfig.MSG_STATE_STOP_SUCCESS, "")

@@ -35,6 +35,14 @@ data class ProfileItem(
     var authority: String? = null,
     var xhttpMode: String? = null,
     var xhttpExtra: String? = null,
+    // SuperNet: olcRTC
+    var olcrtcCarrier: String? = null,
+    var olcrtcTransport: String? = null,
+    var olcrtcServerUrl: String? = null,
+    var olcrtcRoomId: String? = null,
+    var olcrtcClientId: String? = null,
+    var olcrtcKeyHex: String? = null,
+    var olcrtcEngine: String? = null,
     var finalMask: String? = null,
 
     var security: String? = null,
