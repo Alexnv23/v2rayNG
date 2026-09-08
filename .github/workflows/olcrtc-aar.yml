@@ -1,4 +1,4 @@
-name: Build olcRTC AAR
+name: Build olcRTC (AAR + server)
 
 # Ручной запуск: Actions -> "Build olcRTC AAR" -> Run workflow.
 # Собирает olcrtc.aar (gomobile) для встраивания в SuperNet-апп. Гейт 3a.
@@ -65,6 +65,13 @@ jobs:
         ls -la build/
         unzip -l build/olcrtc.aar | head -30
 
+    - name: Build olcrtc server binary (linux/amd64)
+      working-directory: olcrtc
+      run: |
+        CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags "-s -w -checklinkname=0" -o build/olcrtc-linux-amd64 ./cmd/olcrtc
+        ls -la build/olcrtc-linux-amd64
+        file build/olcrtc-linux-amd64 || true
+
     - name: Upload olcrtc.aar
       uses: actions/upload-artifact@v7
       with:
@@ -72,4 +79,11 @@ jobs:
         path: |
           olcrtc/build/olcrtc.aar
           olcrtc/build/olcrtc-sources.jar
+        if-no-files-found: error
+
+    - name: Upload olcrtc server binary (linux)
+      uses: actions/upload-artifact@v7
+      with:
+        name: olcrtc-server-linux-amd64
+        path: olcrtc/build/olcrtc-linux-amd64
         if-no-files-found: error

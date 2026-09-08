@@ -80,6 +80,38 @@ jobs:
         fileName: 'libv2ray.aar'
         out-file-path: V2rayNG/app/libs/
 
+    # ===== SuperNet: сборка olcrtc.aar (запасной канал) =====
+    - name: Checkout olcRTC (upstream)
+      uses: actions/checkout@v7
+      with:
+        repository: openlibrecommunity/olcrtc
+        path: olcrtc
+        fetch-depth: 1
+
+    - name: Setup Go (from olcrtc go.mod)
+      uses: actions/setup-go@v5
+      with:
+        go-version-file: olcrtc/go.mod
+        cache: true
+        cache-dependency-path: olcrtc/go.sum
+
+    - name: Build olcrtc.aar (gomobile)
+      working-directory: olcrtc
+      run: |
+        export ANDROID_NDK_HOME="$NDK_HOME"
+        GOMOBILE_VER=$(grep 'golang.org/x/mobile' go.mod | awk '{print $2}')
+        echo "gomobile: $GOMOBILE_VER  ndk: $ANDROID_NDK_HOME"
+        go install golang.org/x/mobile/cmd/gomobile@$GOMOBILE_VER
+        go install golang.org/x/mobile/cmd/gobind@$GOMOBILE_VER
+        export PATH="$(go env GOPATH)/bin:$PATH"
+        gomobile init
+        mkdir -p build
+        gomobile bind -target=android -androidapi 21 -ldflags "-s -w -checklinkname=0" -o build/olcrtc.aar ./mobile
+        mkdir -p "${{ github.workspace }}/V2rayNG/app/libs"
+        cp build/olcrtc.aar "${{ github.workspace }}/V2rayNG/app/libs/"
+        ls -la "${{ github.workspace }}/V2rayNG/app/libs/"
+    # ===== /SuperNet =====
+
     - name: Setup Java
       uses: actions/setup-java@v6.0.0
       with:
