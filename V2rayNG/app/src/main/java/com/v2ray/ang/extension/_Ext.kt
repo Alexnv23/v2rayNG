@@ -75,7 +75,12 @@ fun EConfigType.isGroupType(): Boolean {
  * @return True if the config type is Custom, PolicyGroup, or ProxyChain, false otherwise.
  */
 fun EConfigType.isComplexType(): Boolean {
-    return this == EConfigType.CUSTOM || this == EConfigType.POLICYGROUP || this == EConfigType.PROXYCHAIN
+    // SuperNet: OLCRTC не имеет поля server (адрес в room/keyHex), поэтому он "сложный" —
+    // чтобы пройти валидацию server-URL в LauncherManager и пропускать real-ping.
+    // Генерация конфига развилкой смотрит на == CUSTOM/POLICYGROUP/PROXYCHAIN, не на isComplexType,
+    // поэтому OLCRTC идёт по нормальному пути (CoreOutboundBuilder.toOutboundOlcrtc).
+    return this == EConfigType.CUSTOM || this == EConfigType.POLICYGROUP ||
+        this == EConfigType.PROXYCHAIN || this == EConfigType.OLCRTC
 }
 
 /**
