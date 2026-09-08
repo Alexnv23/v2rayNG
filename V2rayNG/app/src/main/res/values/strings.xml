@@ -573,4 +573,85 @@
     <string name="sn_backup_channel">Backup channel</string>
     <string name="sn_backup_channel_active">Backup channel on · tap to switch back</string>
     <string name="sn_backup_channel_unavailable">Backup channel will appear in your subscription</string>
+
+    <!-- SuperNet shell 1.3.0 -->
+    <string name="sn_tab_home">Home</string>
+    <string name="sn_tab_locations">Locations</string>
+    <string name="sn_tab_friends">Friends</string>
+    <string name="sn_delete">Delete</string>
+    <string name="sn_sub_deleted">Subscription removed</string>
+
+    <string name="sn_loc_test_all">Check all locations</string>
+    <string name="sn_loc_cancel_test">Stop check</string>
+    <string name="sn_loc_refresh_sub">Refresh subscription</string>
+    <string name="sn_loc_import_clipboard">Paste from clipboard</string>
+    <string name="sn_loc_add">Add</string>
+    <string name="sn_loc_empty">No locations yet. Open your subscription link from the bot or paste it from the clipboard.</string>
+
+    <string name="sn_friends_free_open">Free month unlocked!</string>
+    <string name="sn_friends_free_next">Free month for friends</string>
+    <string name="sn_friends_free_done">Your balance already covers a month. Keep inviting — bonuses keep coming.</string>
+    <plurals name="sn_friends_bring_more">
+        <item quantity="one">Bring %1$d more paying friend</item>
+        <item quantity="other">Bring %1$d more paying friends</item>
+    </plurals>
+    <string name="sn_friends_invited_paid">Invited: %1$d · paid: %2$d</string>
+    <string name="sn_friends_need">Goal: %1$d</string>
+    <string name="sn_friends_your_link">Your invite link</string>
+    <string name="sn_friends_share">Share link</string>
+    <string name="sn_friends_share_text">Fast and stable internet — SuperNet. Join with my link and get a bonus: %1$s</string>
+    <string name="sn_friends_balance">Balance</string>
+    <string name="sn_friends_hook_title">Invite friends — get months for free</string>
+    <string name="sn_friends_hook_text">Loading your numbers from the account…</string>
+    <string name="sn_friends_no_token">Open your subscription link from the bot and your invite link and bonuses will appear here.</string>
+    <string name="sn_friends_tier_each">From every payment of a friend</string>
+    <string name="sn_friends_tier_each_reward">30% to balance</string>
+    <string name="sn_friends_tier_first">First friend paid</string>
+    <string name="sn_friends_tier_first_reward">bonus</string>
+    <string name="sn_friends_tier_tenth">Tenth friend paid</string>
+    <string name="sn_friends_tier_tenth_reward">big bonus</string>
+    <string name="sn_friends_all_in_lk">All details in the account</string>
+
+    <string name="sn_devices_title">My devices</string>
+    <string name="sn_devices_refresh">Refresh devices</string>
+    <string name="sn_devices_loading">LOADING…</string>
+    <string name="sn_devices_connected">CONNECTED: %1$d OF %2$d</string>
+    <string name="sn_devices_no_token_title">No account link</string>
+    <string name="sn_devices_no_token_text">Open your subscription link from the bot — the device list will appear here.</string>
+    <string name="sn_devices_error_title">Could not load</string>
+    <string name="sn_devices_error_text">Check your connection and tap refresh.</string>
+    <string name="sn_devices_empty_title">No devices</string>
+    <string name="sn_devices_empty_text">Connect on this phone — it will show up here.</string>
+    <string name="sn_devices_delete_all">Remove all devices</string>
+    <string name="sn_devices_delete_all_sub">Free up all slots at once</string>
+    <string name="sn_devices_hint">The device limit is set by your plan. Remove an old device to connect a new one.</string>
+    <string name="sn_devices_last_seen">%1$s</string>
+    <string name="sn_devices_confirm_one_title">Remove device?</string>
+    <string name="sn_devices_confirm_one_text">%1$s will be disconnected and its slot freed.</string>
+    <string name="sn_devices_confirm_all_title">Remove all devices?</string>
+    <string name="sn_devices_confirm_all_text">%1$d devices will be disconnected, including this one. You can reconnect right away.</string>
+    <string name="sn_devices_removed">Removed devices: %1$d</string>
+    <string name="sn_devices_remove_failed">Could not remove the device</string>
+
+    <string name="sn_settings_section_account">ACCOUNT</string>
+    <string name="sn_settings_section_connection">CONNECTION</string>
+    <string name="sn_settings_section_more">MORE</string>
+    <string name="sn_settings_section_about">ABOUT</string>
+    <string name="sn_settings_devices_sub">See and remove connected devices</string>
+    <string name="sn_settings_refresh_sub">Refresh subscription</string>
+    <string name="sn_settings_refreshing_sub">Refreshing…</string>
+    <string name="sn_settings_refresh_sub_sub">Get the latest locations from the server</string>
+    <string name="sn_settings_delete_sub">Remove subscription</string>
+    <string name="sn_settings_delete_sub_sub">Delete all locations and the account link</string>
+    <string name="sn_settings_delete_sub_confirm_title">Remove subscription?</string>
+    <string name="sn_settings_delete_sub_confirm_text">All locations will be deleted and the connection will stop. You can add it again from the bot.</string>
+    <string name="sn_settings_per_app">Apps to bypass</string>
+    <string name="sn_settings_per_app_sub">Choose apps that connect directly</string>
+    <string name="sn_settings_bypass_lan">Bypass local network</string>
+    <string name="sn_settings_bypass_lan_sub">Printers, TV and home devices stay reachable</string>
+    <string name="sn_settings_logcat_sub">Logs for support</string>
+    <string name="sn_settings_advanced">Advanced settings</string>
+    <string name="sn_settings_advanced_sub">Engine settings for experienced users</string>
+    <string name="sn_settings_advanced_profiles">Advanced profile list</string>
+    <string name="sn_settings_advanced_profiles_sub">Full profile manager with groups and editing</string>
 </resources>

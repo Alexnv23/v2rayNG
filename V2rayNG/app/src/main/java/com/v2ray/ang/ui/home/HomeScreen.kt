@@ -88,7 +88,7 @@ fun HomeScreen(
             .statusBarsPadding()
             .navigationBarsPadding()
             .padding(horizontal = 18.dp)
-            .padding(top = 20.dp, bottom = 40.dp),
+            .padding(top = 20.dp, bottom = 120.dp),
     ) {
         // ── Шапка ──
         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {

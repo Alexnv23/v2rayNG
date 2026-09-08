@@ -67,4 +67,10 @@ sealed interface MainAction {
     data class ImportBatchConfig(val configText: String) : MainAction
 
     data object LocateHandled : MainAction
+
+    /** SuperNet: проверить все локации (реальный тест) — берём самую большую группу (подписку). */
+    data object SnTestAllLocations : MainAction
+
+    /** SuperNet: удалить подписку целиком — все профили, подписки и токен кабинета. */
+    data object SnDeleteSubscription : MainAction
 }

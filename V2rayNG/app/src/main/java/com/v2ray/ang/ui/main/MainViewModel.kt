@@ -196,6 +196,8 @@ class MainViewModel(
             MainAction.RefreshGroups -> setupGroupTab(forceRefresh = true)
             MainAction.TestAllServers -> testAllRealPing(true)
             MainAction.TestRealAllServers -> testAllRealPing()
+            MainAction.SnTestAllLocations -> snTestAllLocations()
+            MainAction.SnDeleteSubscription -> snDeleteSubscriptionAsync()
             MainAction.CancelTesting -> cancelAllPing()
             MainAction.RemoveAllServers -> removeAllServerAsync()
             MainAction.RemoveDuplicateServers -> removeDuplicateServerAsync()
@@ -687,6 +689,37 @@ class MainViewModel(
 
     fun refreshSelectedGuid() {
         _uiState.update { it.copy(selectedGuid = dataSource.getSelectServer()) }
+    }
+
+    /** SuperNet: тест всех локаций — переключаемся на самую большую группу (подписку) и гоним реальный тест. */
+    private fun snTestAllLocations() {
+        val groups = uiState.value.groups
+        if (groups.isEmpty()) return
+        val target = groups.maxByOrNull { mutableServerGroupState(it.id).value.servers.size } ?: return
+        if (target.id != uiState.value.selectedGroupId) {
+            dataSource.setSelectedSubscriptionId(target.id)
+            _uiState.update { it.copy(selectedGroupId = target.id) }
+        }
+        testAllRealPing()
+    }
+
+    /** SuperNet: удалить подписку целиком (профили + подписки + токен кабинета). Сервис останавливает Activity. */
+    private fun snDeleteSubscriptionAsync() {
+        launchLoading {
+            withContext(ioDispatcher) {
+                try {
+                    dataSource.removeAllServer()
+                    dataSource.getSubscriptions().forEach { MmkvManager.removeSubscription(it.guid) }
+                    com.v2ray.ang.handler.SnAccountManager.clearToken()
+                } catch (e: Exception) {
+                    LogUtil.e(AppConfig.TAG, "SuperNet: delete subscription failed", e)
+                }
+            }
+            cacheMutex.withLock { groupDataCache.clear() }
+            setupGroupTab(forceRefresh = true).join()
+            refreshSelectedGuid()
+            toast(R.string.sn_sub_deleted)
+        }
     }
 
     /**

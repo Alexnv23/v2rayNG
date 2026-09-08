@@ -573,4 +573,87 @@
     <string name="sn_backup_channel">Запасной канал</string>
     <string name="sn_backup_channel_active">Запасной канал включён · нажмите, чтобы вернуться</string>
     <string name="sn_backup_channel_unavailable">Запасной канал появится в вашей подписке</string>
+
+    <!-- SuperNet shell 1.3.0 -->
+    <string name="sn_tab_home">Главная</string>
+    <string name="sn_tab_locations">Локации</string>
+    <string name="sn_tab_friends">Друзья</string>
+    <string name="sn_delete">Удалить</string>
+    <string name="sn_sub_deleted">Подписка удалена</string>
+
+    <string name="sn_loc_test_all">Проверить все локации</string>
+    <string name="sn_loc_cancel_test">Остановить проверку</string>
+    <string name="sn_loc_refresh_sub">Обновить подписку</string>
+    <string name="sn_loc_import_clipboard">Вставить из буфера</string>
+    <string name="sn_loc_add">Добавить</string>
+    <string name="sn_loc_empty">Локаций пока нет. Откройте ссылку подписки из бота или вставьте её из буфера обмена.</string>
+
+    <string name="sn_friends_free_open">Бесплатный месяц открыт!</string>
+    <string name="sn_friends_free_next">Бесплатный месяц за друзей</string>
+    <string name="sn_friends_free_done">Баланса уже хватает на месяц. Приглашайте дальше — бонусы продолжают капать.</string>
+    <plurals name="sn_friends_bring_more">
+        <item quantity="one">Приведите ещё %1$d оплатившего друга</item>
+        <item quantity="few">Приведите ещё %1$d оплативших друга</item>
+        <item quantity="many">Приведите ещё %1$d оплативших друзей</item>
+        <item quantity="other">Приведите ещё %1$d оплативших друзей</item>
+    </plurals>
+    <string name="sn_friends_invited_paid">Приглашено: %1$d · оплатили: %2$d</string>
+    <string name="sn_friends_need">Цель: %1$d</string>
+    <string name="sn_friends_your_link">Ваша ссылка для друзей</string>
+    <string name="sn_friends_share">Поделиться ссылкой</string>
+    <string name="sn_friends_share_text">Быстрый и стабильный интернет — SuperNet. Заходи по моей ссылке и получи бонус: %1$s</string>
+    <string name="sn_friends_balance">Баланс</string>
+    <string name="sn_friends_hook_title">Приглашайте друзей — получайте месяцы бесплатно</string>
+    <string name="sn_friends_hook_text">Загружаем ваши цифры из кабинета…</string>
+    <string name="sn_friends_no_token">Откройте ссылку подписки из бота — здесь появится ваша ссылка для друзей и бонусы.</string>
+    <string name="sn_friends_tier_each">С каждой оплаты друга</string>
+    <string name="sn_friends_tier_each_reward">30% на баланс</string>
+    <string name="sn_friends_tier_first">Первый друг оплатил</string>
+    <string name="sn_friends_tier_first_reward">бонус</string>
+    <string name="sn_friends_tier_tenth">Десятый друг оплатил</string>
+    <string name="sn_friends_tier_tenth_reward">большой бонус</string>
+    <string name="sn_friends_all_in_lk">Подробности в кабинете</string>
+
+    <string name="sn_devices_title">Мои устройства</string>
+    <string name="sn_devices_refresh">Обновить список устройств</string>
+    <string name="sn_devices_loading">ЗАГРУЗКА…</string>
+    <string name="sn_devices_connected">ПОДКЛЮЧЕНО: %1$d ИЗ %2$d</string>
+    <string name="sn_devices_no_token_title">Нет связи с кабинетом</string>
+    <string name="sn_devices_no_token_text">Откройте ссылку подписки из бота — список устройств появится здесь.</string>
+    <string name="sn_devices_error_title">Не удалось загрузить</string>
+    <string name="sn_devices_error_text">Проверьте соединение и нажмите «обновить».</string>
+    <string name="sn_devices_empty_title">Устройств нет</string>
+    <string name="sn_devices_empty_text">Подключитесь на этом телефоне — он появится здесь.</string>
+    <string name="sn_devices_delete_all">Удалить все устройства</string>
+    <string name="sn_devices_delete_all_sub">Освободить все слоты разом</string>
+    <string name="sn_devices_hint">Лимит устройств задаёт ваш тариф. Чтобы подключить новое — удалите старое.</string>
+    <string name="sn_devices_last_seen">%1$s</string>
+    <string name="sn_devices_confirm_one_title">Удалить устройство?</string>
+    <string name="sn_devices_confirm_one_text">%1$s будет отключено, слот освободится.</string>
+    <string name="sn_devices_confirm_all_title">Удалить все устройства?</string>
+    <string name="sn_devices_confirm_all_text">Будет отключено устройств: %1$d, включая это. Подключиться заново можно сразу.</string>
+    <string name="sn_devices_removed">Удалено устройств: %1$d</string>
+    <string name="sn_devices_remove_failed">Не удалось удалить устройство</string>
+
+    <string name="sn_settings_section_account">АККАУНТ</string>
+    <string name="sn_settings_section_connection">ПОДКЛЮЧЕНИЕ</string>
+    <string name="sn_settings_section_more">ЕЩЁ</string>
+    <string name="sn_settings_section_about">О ПРИЛОЖЕНИИ</string>
+    <string name="sn_settings_devices_sub">Посмотреть и удалить подключённые устройства</string>
+    <string name="sn_settings_refresh_sub">Обновить подписку</string>
+    <string name="sn_settings_refreshing_sub">Обновляем…</string>
+    <string name="sn_settings_refresh_sub_sub">Подтянуть актуальные локации с сервера</string>
+    <string name="sn_settings_delete_sub">Удалить подписку</string>
+    <string name="sn_settings_delete_sub_sub">Удалить все локации и связь с кабинетом</string>
+    <string name="sn_settings_delete_sub_confirm_title">Удалить подписку?</string>
+    <string name="sn_settings_delete_sub_confirm_text">Все локации будут удалены, подключение остановится. Добавить заново можно из бота.</string>
+    <string name="sn_settings_per_app">Приложения в обход</string>
+    <string name="sn_settings_per_app_sub">Выбрать приложения, которые идут напрямую</string>
+    <string name="sn_settings_bypass_lan">Обход локальной сети</string>
+    <string name="sn_settings_bypass_lan_sub">Принтеры, телевизор и домашние устройства остаются доступны</string>
+    <string name="sn_settings_logcat_sub">Журнал для поддержки</string>
+    <string name="sn_settings_advanced">Расширенные настройки</string>
+    <string name="sn_settings_advanced_sub">Настройки движка для опытных</string>
+    <string name="sn_settings_advanced_profiles">Расширенный список профилей</string>
+    <string name="sn_settings_advanced_profiles_sub">Полный менеджер профилей с группами и правкой</string>
 </resources>

@@ -8,11 +8,17 @@ import android.view.KeyEvent
 import androidx.activity.compose.BackHandler
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import com.v2ray.ang.AngApplication
@@ -51,6 +57,12 @@ import com.v2ray.ang.ui.server.ServerVlessActivity
 import com.v2ray.ang.ui.server.ServerVmessActivity
 import com.v2ray.ang.ui.server.ServerWireguardActivity
 import com.v2ray.ang.ui.settings.SettingsActivity
+import com.v2ray.ang.ui.shell.DevicesScreen
+import com.v2ray.ang.ui.shell.FriendsScreen
+import com.v2ray.ang.ui.shell.LocationsScreen
+import com.v2ray.ang.ui.shell.SnBottomBar
+import com.v2ray.ang.ui.shell.SnSettingsScreen
+import com.v2ray.ang.ui.shell.SnTab
 import com.v2ray.ang.ui.subscription.SubSettingActivity
 import com.v2ray.ang.ui.userasset.UserAssetActivity
 import com.v2ray.ang.util.LogUtil
@@ -96,6 +108,7 @@ class MainActivity : HelperBaseComponentActivity() {
             val restartService = SettingsChangeManager.consumeRestartService()
             val refreshGroups = SettingsChangeManager.consumeSetupGroupTab()
             mainViewModel.refreshUiSettings()
+            homeViewModel.loadBypassLan()
             if (refreshGroups) mainViewModel.onAction(MainAction.RefreshGroups)
             if (restartService) LauncherManager.restartService(this)
         }
@@ -109,48 +122,149 @@ class MainActivity : HelperBaseComponentActivity() {
 
     @Composable
     override fun ScreenContent() {
-        // SuperNet: главная — наша оболочка; список профилей v2rayNG живёт на странице «Локации».
-        var showLocations by rememberSaveable { mutableStateOf(false) }
+        // SuperNet: оболочка с нижней панелью (Главная / Локации / Друзья / Питание),
+        // экраны без вкладки — Настройки, Устройства, Расширенный (старый MainScreen v2rayNG).
+        var tab by rememberSaveable { mutableStateOf(SnTab.HOME) }
         val uiState by mainViewModel.uiState.collectAsStateWithLifecycle()
+        val isLoading by mainViewModel.isLoading.collectAsStateWithLifecycle()
+        val homeState by homeViewModel.uiState.collectAsStateWithLifecycle()
+        val removedToast = stringResource(R.string.sn_devices_removed)
+        val removedFailToast = stringResource(R.string.sn_devices_remove_failed)
 
-        if (!showLocations) {
-            BackHandler { moveTaskToBack(false) }
-            HomeScreen(
-                homeViewModel = homeViewModel,
-                selectedGuid = uiState.selectedGuid,
-                isRunning = uiState.isRunning,
-                onToggleService = { handleFabAction() },
-                onOpenLocations = { showLocations = true },
-                onOpenSettings = { navigateTo(MainDestination.Settings) },
-                onToggleBackupChannel = { toggleBackupChannel() },
-                onOpenUrl = { url -> Utils.openUri(this, url) },
-                onOpenTelegram = { domain -> openTelegram(domain) },
+        LaunchedEffect(Unit) {
+            homeViewModel.messages.collect { msg ->
+                val text = when {
+                    msg.serverText.isNotBlank() -> msg.serverText
+                    msg.ok -> String.format(removedToast, msg.removedCount)
+                    else -> removedFailToast
+                }
+                if (msg.ok) toastSuccess(text) else toastError(text)
+            }
+        }
+
+        val onAction: (MainAction) -> Unit = { action ->
+            when (action) {
+                MainAction.ToggleService -> handleFabAction()
+                MainAction.TestCurrentServer -> handleLayoutTestClick()
+                MainAction.ImportQRcode -> importQRcode()
+                MainAction.ImportClipboard -> importClipboard()
+                MainAction.ImportConfigLocal -> importConfigLocal()
+                is MainAction.ImportManually -> importManually(action.type)
+                MainAction.RestartService -> LauncherManager.restartServiceOrStart(this, ::requestServiceStart)
+                MainAction.LocateSelectedServer -> mainViewModel.triggerLocateSelectedServer()
+                is MainAction.SelectServer -> setSelectServer(action.guid)
+                is MainAction.EditServer -> editServer(action.guid, action.profile)
+                is MainAction.ShareClipboard -> shareToClipboard(action.guid)
+                is MainAction.ShareFullContent -> shareFullContentAsync(action.guid)
+                MainAction.SnDeleteSubscription -> {
+                    if (mainViewModel.uiState.value.isRunning) LauncherManager.stopService(this)
+                    mainViewModel.onAction(action)
+                    homeViewModel.refreshStats()
+                }
+                else -> mainViewModel.onAction(action)
+            }
+        }
+
+        if (tab == SnTab.ADVANCED) {
+            BackHandler { tab = SnTab.SETTINGS }
+            MainScreen(
+                mainViewModel = mainViewModel,
+                onAction = onAction,
+                onNavigate = { route -> navigateTo(route) },
             )
             return
         }
 
-        BackHandler { showLocations = false }
-        MainScreen(
-            mainViewModel = mainViewModel,
-            onAction = { action ->
-                when (action) {
-                    MainAction.ToggleService -> handleFabAction()
-                    MainAction.TestCurrentServer -> handleLayoutTestClick()
-                    MainAction.ImportQRcode -> importQRcode()
-                    MainAction.ImportClipboard -> importClipboard()
-                    MainAction.ImportConfigLocal -> importConfigLocal()
-                    is MainAction.ImportManually -> importManually(action.type)
-                    MainAction.RestartService -> LauncherManager.restartServiceOrStart(this, ::requestServiceStart)
-                    MainAction.LocateSelectedServer -> mainViewModel.triggerLocateSelectedServer()
-                    is MainAction.SelectServer -> setSelectServer(action.guid)
-                    is MainAction.EditServer -> editServer(action.guid, action.profile)
-                    is MainAction.ShareClipboard -> shareToClipboard(action.guid)
-                    is MainAction.ShareFullContent -> shareFullContentAsync(action.guid)
-                    else -> mainViewModel.onAction(action)
-                }
-            },
-            onNavigate = { route -> navigateTo(route) },
-        )
+        BackHandler {
+            when (tab) {
+                SnTab.HOME -> moveTaskToBack(false)
+                SnTab.DEVICES -> tab = SnTab.SETTINGS
+                else -> tab = SnTab.HOME
+            }
+        }
+
+        Box(modifier = Modifier.fillMaxSize()) {
+            when (tab) {
+                SnTab.HOME -> HomeScreen(
+                    homeViewModel = homeViewModel,
+                    selectedGuid = uiState.selectedGuid,
+                    isRunning = uiState.isRunning,
+                    onToggleService = { handleFabAction() },
+                    onOpenLocations = { tab = SnTab.LOCATIONS },
+                    onOpenSettings = { tab = SnTab.SETTINGS },
+                    onToggleBackupChannel = { toggleBackupChannel() },
+                    onOpenUrl = { url -> Utils.openUri(this, url) },
+                    onOpenTelegram = { domain -> openTelegram(domain) },
+                )
+
+                SnTab.LOCATIONS -> LocationsScreen(
+                    mainViewModel = mainViewModel,
+                    isRunning = uiState.isRunning,
+                    onAction = onAction,
+                )
+
+                SnTab.FRIENDS -> FriendsScreen(
+                    homeViewModel = homeViewModel,
+                    onOpenUrl = { url -> Utils.openUri(this, url) },
+                    onShareText = { text -> shareText(text) },
+                )
+
+                SnTab.SETTINGS -> SnSettingsScreen(
+                    bypassLan = homeState.bypassLan,
+                    isRefreshing = isLoading,
+                    onBack = { tab = SnTab.HOME },
+                    onOpenDevices = { tab = SnTab.DEVICES },
+                    onRefreshSubscription = { onAction(MainAction.UpdateSubscriptions) },
+                    onDeleteSubscription = { onAction(MainAction.SnDeleteSubscription) },
+                    onOpenPerApp = { openPerAppProxy() },
+                    onBypassLanChange = { enabled ->
+                        homeViewModel.setBypassLan(enabled)
+                        LauncherManager.restartService(this)
+                    },
+                    onOpenLogcat = { navigateTo(MainDestination.Logcat) },
+                    onOpenAdvancedSettings = { navigateTo(MainDestination.Settings) },
+                    onOpenAdvancedProfiles = { tab = SnTab.ADVANCED },
+                )
+
+                SnTab.DEVICES -> DevicesScreen(
+                    homeViewModel = homeViewModel,
+                    onBack = { tab = SnTab.SETTINGS },
+                )
+
+                SnTab.ADVANCED -> Unit
+            }
+
+            SnBottomBar(
+                selected = tab,
+                onSelect = { tab = it },
+                connected = uiState.isRunning,
+                testProgress = (uiState.status as? MainStatus.TestProgress)?.progress
+                    ?: if (uiState.isTesting) "" else null,
+                onPowerClick = { handleFabAction() },
+                modifier = Modifier.align(Alignment.BottomCenter),
+            )
+        }
+    }
+
+    /** «Приложения в обход»: включаем per-app режим и открываем список приложений. */
+    private fun openPerAppProxy() {
+        lifecycleScope.launch(Dispatchers.IO) {
+            MmkvManager.encodeSettings(AppConfig.PREF_PER_APP_PROXY, true)
+            withContext(Dispatchers.Main) { navigateTo(MainDestination.PerAppProxy) }
+        }
+    }
+
+    /** Поделиться текстом (реф-ссылка) через системный выбор приложений. */
+    private fun shareText(text: String) {
+        val intent = Intent(Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(Intent.EXTRA_TEXT, text)
+        }
+        try {
+            startActivity(Intent.createChooser(intent, getString(R.string.sn_friends_share)))
+        } catch (e: Exception) {
+            LogUtil.e(AppConfig.TAG, "SuperNet: share text failed", e)
+        }
     }
 
     private fun shareToClipboard(guid: String): Boolean =
