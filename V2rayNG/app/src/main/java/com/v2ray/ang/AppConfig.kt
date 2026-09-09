@@ -83,6 +83,8 @@ object AppConfig {
      * Синтаксис xray: "domain:" = домен и все поддомены (lk., panel.).
      */
     val SN_SUB_DIRECT_DOMAINS = listOf("domain:supernet-tech.ru")
+    /** SuperNet: момент старта подключения (ms) — чтобы таймер на главной переживал убийство приложения. */
+    const val PREF_SN_CONNECTED_AT = "pref_sn_connected_at"
     const val PREF_OLCRTC_DNS = "pref_olcrtc_dns"
     const val DNS_OLCRTC_FALLBACK = "1.1.1.1:53"
     const val PORT_OLCRTC_SOCKS = "10809"
