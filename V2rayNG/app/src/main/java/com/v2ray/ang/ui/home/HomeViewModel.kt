@@ -6,7 +6,9 @@ import com.v2ray.ang.AppConfig
 import com.v2ray.ang.enums.EConfigType
 import com.v2ray.ang.handler.MmkvManager
 import com.v2ray.ang.handler.SnAccountManager
+import com.v2ray.ang.handler.SnUpdateManager
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -28,6 +30,10 @@ data class HomeUiState(
     val selectedIsBackup: Boolean = false,
     val backupAvailable: Boolean = false,
     val stats: SnAccountManager.Stats? = null,
+    /** Имя из кэша (последняя удачная загрузка) — показываем, пока свежая статистика не пришла. */
+    val cachedDisplayName: String? = null,
+    /** Доступное обновление приложения (version.json на ЛК); null — нет или скрыто. */
+    val update: SnUpdateManager.Info? = null,
     val hasToken: Boolean = false,
     val statsLoading: Boolean = false,
     val statsError: Boolean = false,
@@ -111,20 +117,47 @@ class HomeViewModel : ViewModel() {
             MmkvManager.encodeSettings(AppConfig.PREF_SN_CONNECTED_AT, it)
         }
         _uiState.update { it.copy(connectedAtMs = start) }
+        // Подключение поднялось — статистика могла не загрузиться до этого (нет сети / обход
+        // ещё не готов). Перечитать чуть позже, когда тоннель точно живой.
+        if (uiState.value.stats == null && SnAccountManager.getToken() != null) {
+            viewModelScope.launch {
+                delay(3000L)
+                refreshStats()
+            }
+        }
+    }
+
+    private var updateChecked = false
+
+    /** Проверка обновления — один раз за запуск приложения, тихо в фоне. */
+    fun checkUpdate(force: Boolean = false) {
+        if (updateChecked && !force) return
+        updateChecked = true
+        viewModelScope.launch(Dispatchers.IO) {
+            val info = SnUpdateManager.check() ?: return@launch
+            withContext(Dispatchers.Main) { _uiState.update { it.copy(update = info) } }
+        }
+    }
+
+    fun dismissUpdate() {
+        _uiState.update { it.copy(update = null) }
     }
 
     /** Живые цифры ЛК по токену (если токен есть). */
     fun refreshStats() {
         val token = SnAccountManager.getToken()
-        _uiState.update { it.copy(hasToken = token != null, statsError = false) }
+        _uiState.update {
+            it.copy(hasToken = token != null, statsError = false, cachedDisplayName = SnAccountManager.getCachedDisplayName())
+        }
         if (token == null) return
         statsJob?.cancel()
         _uiState.update { it.copy(statsLoading = true) }
         statsJob = viewModelScope.launch(Dispatchers.IO) {
             val stats = SnAccountManager.fetch(token)
+            if (stats != null) SnAccountManager.cacheDisplayName(stats.displayName)
             withContext(Dispatchers.Main) {
                 _uiState.update {
-                    if (stats != null) it.copy(stats = stats, statsLoading = false, statsError = false)
+                    if (stats != null) it.copy(stats = stats, statsLoading = false, statsError = false, cachedDisplayName = stats.displayName ?: it.cachedDisplayName)
                     else it.copy(statsLoading = false, statsError = true)
                 }
             }

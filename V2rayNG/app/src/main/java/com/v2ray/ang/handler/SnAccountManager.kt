@@ -17,7 +17,9 @@ import java.net.URL
 object SnAccountManager {
     private const val BASE = "https://lk.supernet-tech.ru"
     private const val KEY_TOKEN = "sn_account_token"
-    private const val TIMEOUT_MS = 8000
+    private const val KEY_DISPLAY_NAME = "sn_account_display_name"
+    // 15 с: /api/app/stats на сервере ходит в Marzban + ref_api (бот-сервер, таймаут 5 с) — при их тормозах 8 с не хватало (лог 09.09 21:46: SocketTimeoutException при живом тоннеле).
+    private const val TIMEOUT_MS = 15000
 
     fun saveToken(token: String) {
         if (token.isBlank()) return
@@ -26,9 +28,20 @@ object SnAccountManager {
 
     fun getToken(): String? = MmkvManager.decodeSettingsString(KEY_TOKEN)?.takeIf { it.isNotBlank() }
 
+    /**
+     * Последнее удачно полученное имя (для «Привет, …» на главной). Живёт между запусками,
+     * чтобы одна неудачная загрузка статистики (сеть моргнула, ЛК перезапускался) не прятала имя.
+     */
+    fun getCachedDisplayName(): String? = MmkvManager.decodeSettingsString(KEY_DISPLAY_NAME)?.takeIf { it.isNotBlank() }
+
+    fun cacheDisplayName(name: String?) {
+        if (!name.isNullOrBlank()) MmkvManager.encodeSettings(KEY_DISPLAY_NAME, name)
+    }
+
     /** Забыть токен кабинета (при удалении подписки). */
     fun clearToken() {
         MmkvManager.encodeSettings(KEY_TOKEN, "")
+        MmkvManager.encodeSettings(KEY_DISPLAY_NAME, "")
     }
 
     /** Устройство из учёта ЛК (marzban_devices, сгруппировано по hwid на сервере). */

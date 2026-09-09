@@ -29,7 +29,14 @@ object OlcrtcManager {
     @Volatile
     var socketProtector: ((Int) -> Boolean)? = null
 
-    private val runtime: Runtime by lazy { Mobile.new_() }
+    /**
+     * Go-рантайм olcRTC. НЕ val: если Stop() не уложился в таймаут (генерация зависла в WebRTC),
+     * рантайм остаётся в состоянии stopping навсегда и любой следующий start() видит «уже запущен»
+     * при мёртвом SOCKS. Тогда старый экземпляр бросаем и создаём новый (баг 09.09: «обход не
+     * стартует / не выключается, лечится только принудительной остановкой приложения»).
+     */
+    @Volatile
+    private var runtime: Runtime = Mobile.new_()
 
     private val protector = object : SocketProtector {
         override fun protect(fd: Long): Boolean {
@@ -44,10 +51,26 @@ object OlcrtcManager {
             false
         }
 
+    /** Состояние Go-рантайма: idle / starting / running / stopping / stopped. */
+    private val state: String
+        get() = try {
+            runtime.state()
+        } catch (e: Exception) {
+            "unknown"
+        }
+
+    @Synchronized
     fun start(context: Context, config: ProfileItem): Boolean {
-        if (isRunning) {
-            LogUtil.i(AppConfig.TAG, "OlcrtcManager: already running")
+        val st = state
+        if (st == "running") {
+            LogUtil.i(AppConfig.TAG, "OlcrtcManager: already running (ready), reuse")
             return true
+        }
+        if (isRunning) {
+            // starting/stopping — полуживая генерация (не дождались ready, или прошлый stop не успел).
+            // Раньше тут было «already running → true» и xray уходил в мёртвый SOCKS.
+            LogUtil.w(AppConfig.TAG, "OlcrtcManager: stale generation state=$st, restarting")
+            stopInternal()
         }
 
         val carrier = config.olcrtcCarrier?.takeIf { it.isNotBlank() } ?: "jitsi"
@@ -100,16 +123,26 @@ object OlcrtcManager {
             return true
         } catch (e: Exception) {
             LogUtil.e(AppConfig.TAG, "OlcrtcManager: start failed: ${e.javaClass.simpleName}: ${e.message}", e)
+            // Не оставлять полуживую генерацию: иначе следующий start() увидит «уже запущен».
+            stopInternal()
             return false
         }
     }
 
-    fun stop() {
+    @Synchronized
+    fun stop() = stopInternal()
+
+    private fun stopInternal() {
+        val st = state
+        if (st == "idle" || st == "stopped") return
         try {
             runtime.stop(STOP_TIMEOUT_MS)
-            LogUtil.i(AppConfig.TAG, "OlcrtcManager: stopped")
+            LogUtil.i(AppConfig.TAG, "OlcrtcManager: stopped (was $st)")
         } catch (e: Exception) {
-            LogUtil.e(AppConfig.TAG, "OlcrtcManager: stop failed", e)
+            // Таймаут/ошибка стопа = рантайм застрял в stopping навсегда. Бросаем экземпляр,
+            // берём свежий; зависшие горутины старого доживут сами, порт подберётся другой.
+            LogUtil.e(AppConfig.TAG, "OlcrtcManager: stop failed (${e.message}), replacing runtime", e)
+            runtime = Mobile.new_()
         }
     }
 

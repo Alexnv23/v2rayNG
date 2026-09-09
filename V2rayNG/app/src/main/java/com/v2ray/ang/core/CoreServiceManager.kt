@@ -221,10 +221,13 @@ object CoreServiceManager {
             browserDialer = null
         }
 
-        // SuperNet: остановить olcRTC, если он был активен
-        if (currentConfig?.configType == EConfigType.OLCRTC) {
-            OlcrtcManager.stop()
-            OlcrtcManager.socketProtector = null
+        // SuperNet: остановить olcRTC, если он живой — по факту, а не по currentConfig
+        // (при неудачном старте обхода currentConfig остаётся прошлым профилем, а генерация висит).
+        // В IO, чтобы stop с таймаутом до 5 с не морозил главный поток (баг 09.09 «не выключается»).
+        if (OlcrtcManager.isRunning) {
+            // socketProtector НЕ обнуляем здесь: следующий start() ставит его заново, а фоновой
+            // stop мог бы затереть свежий protector гонкой → сокеты обхода ушли бы в тоннель.
+            CoroutineScope(Dispatchers.IO).launch { OlcrtcManager.stop() }
         }
 
         // SuperNet: подключение остановлено — сбросить момент старта (таймер на главной).

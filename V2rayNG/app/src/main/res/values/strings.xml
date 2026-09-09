@@ -559,6 +559,9 @@
     <string name="sn_status_tap_to_connect">tap to connect</string>
     <string name="sn_hello_name">Hi, %1$s!</string>
     <string name="sn_premium_access">premium access</string>
+    <string name="sn_update_available">New version %1$s available</string>
+    <string name="sn_update_hint">Installs over the current one — nothing to delete</string>
+    <string name="sn_update_button">Update</string>
     <string name="sn_choose_location">Choose location</string>
     <string name="sn_location_tap_hint">tap to change location</string>
     <string name="sn_location_backup_hint">backup channel · messengers and sites</string>
@@ -611,6 +614,7 @@
     <string name="sn_friends_tier_tenth">Tenth friend paid</string>
     <string name="sn_friends_tier_tenth_reward">big bonus</string>
     <string name="sn_friends_all_in_lk">All details in the account</string>
+    <string name="sn_friends_channel">📢 Our channel — news and status</string>
 
     <string name="sn_devices_title">My devices</string>
     <string name="sn_devices_refresh">Refresh devices</string>

@@ -3,6 +3,7 @@ package com.v2ray.ang.ui.home
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -70,6 +71,9 @@ fun HomeScreen(
     LaunchedEffect(isRunning) {
         homeViewModel.onRunningChanged(isRunning)
         homeViewModel.refreshStats()
+        // Обновление проверяем при первом заходе и повторно, когда тоннель поднялся
+        // (на белых списках без тоннеля до ЛК не достучаться).
+        homeViewModel.checkUpdate(force = isRunning)
     }
 
     val statusText = stringResource(if (isRunning) R.string.sn_status_connected else R.string.sn_status_disconnected)
@@ -113,7 +117,7 @@ fun HomeScreen(
                     fontFamily = FontFamily.Serif,
                 )
                 Text(
-                    text = state.stats?.displayName?.let { stringResource(R.string.sn_hello_name, it) }
+                    text = (state.stats?.displayName ?: state.cachedDisplayName)?.let { stringResource(R.string.sn_hello_name, it) }
                         ?: stringResource(R.string.sn_premium_access),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontSize = 13.sp,
@@ -131,6 +135,48 @@ fun HomeScreen(
                         contentDescription = stringResource(R.string.title_settings),
                         tint = SnGold,
                         modifier = Modifier.size(22.dp),
+                    )
+                }
+            }
+        }
+
+        // ── Баннер обновления (SuperNet 1.3.6) ──
+        state.update?.let { upd ->
+            Spacer(Modifier.height(14.dp))
+            Surface(
+                shape = RoundedCornerShape(16.dp),
+                color = Color(0x1AD9B95C),
+                border = BorderStroke(1.dp, SnGold),
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Row(modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Text("🆕", fontSize = 22.sp)
+                    Spacer(Modifier.size(10.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            stringResource(R.string.sn_update_available, upd.version),
+                            color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold, fontSize = 14.sp,
+                        )
+                        Text(
+                            stringResource(R.string.sn_update_hint),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp,
+                        )
+                    }
+                    Spacer(Modifier.size(10.dp))
+                    Surface(
+                        onClick = { onOpenUrl(upd.downloadUrl) },
+                        shape = RoundedCornerShape(12.dp), color = SnGold,
+                    ) {
+                        Text(
+                            stringResource(R.string.sn_update_button),
+                            color = Color(0xFF0A0908), fontWeight = FontWeight.Bold, fontSize = 13.sp,
+                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 9.dp),
+                        )
+                    }
+                    Spacer(Modifier.size(4.dp))
+                    Text(
+                        "✕", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 16.sp,
+                        modifier = Modifier.clip(CircleShape).clickable { homeViewModel.dismissUpdate() }.padding(6.dp),
                     )
                 }
             }

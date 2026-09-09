@@ -44,6 +44,7 @@ import com.v2ray.ang.ui.compose.SnGold
 import com.v2ray.ang.ui.home.HomeViewModel
 
 private const val URL_LK_REF = "https://lk.supernet-tech.ru/?open=referral"
+private const val URL_CHANNEL = "https://t.me/supernet_vpn_access"
 private const val FREE_MONTH_AT = 4 // оплативших друзей → накопил балансом на месяц (~30% с каждого)
 
 private data class Tier(val n: String, val labelRes: Int, val rewardRes: Int)
@@ -217,6 +218,23 @@ fun FriendsScreen(
                 horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(stringResource(R.string.sn_friends_all_in_lk), color = SnGold, fontWeight = FontWeight.Medium, fontSize = 15.sp)
+            }
+        }
+
+        Spacer(Modifier.height(10.dp))
+
+        // SuperNet 1.3.6: наш канал — новости, статус работы, обновления приложения
+        Surface(
+            onClick = { onOpenUrl(URL_CHANNEL) },
+            shape = RoundedCornerShape(16.dp), color = Color.Transparent,
+            border = BorderStroke(1.dp, SnCardBorder),
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Row(
+                modifier = Modifier.padding(vertical = 14.dp),
+                horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(stringResource(R.string.sn_friends_channel), color = SnGold, fontWeight = FontWeight.Medium, fontSize = 15.sp)
             }
         }
     }

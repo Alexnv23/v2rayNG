@@ -559,6 +559,9 @@
     <string name="sn_status_tap_to_connect">нажмите, чтобы подключиться</string>
     <string name="sn_hello_name">Привет, %1$s!</string>
     <string name="sn_premium_access">премиум-доступ</string>
+    <string name="sn_update_available">Доступна версия %1$s</string>
+    <string name="sn_update_hint">Ставится поверх текущей — ничего удалять не нужно</string>
+    <string name="sn_update_button">Обновить</string>
     <string name="sn_choose_location">Выбрать локацию</string>
     <string name="sn_location_tap_hint">нажмите, чтобы сменить локацию</string>
     <string name="sn_location_backup_hint">запасной канал · мессенджеры и сайты</string>
@@ -613,6 +616,7 @@
     <string name="sn_friends_tier_tenth">Десятый друг оплатил</string>
     <string name="sn_friends_tier_tenth_reward">большой бонус</string>
     <string name="sn_friends_all_in_lk">Подробности в кабинете</string>
+    <string name="sn_friends_channel">📢 Наш канал — новости и статус работы</string>
 
     <string name="sn_devices_title">Мои устройства</string>
     <string name="sn_devices_refresh">Обновить список устройств</string>
