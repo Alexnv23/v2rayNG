@@ -99,30 +99,19 @@ class HomeViewModel : ViewModel() {
      * на смену локации) значение сбрасывается — отсчёт начинается заново, как и должен.
      */
     fun onRunningChanged(isRunning: Boolean) {
-        val prev = lastRunning
-        lastRunning = isRunning
-        if (isRunning) {
-            val start = when (prev) {
-                // Приложение только открылось, а сервис уже работает → продолжаем сохранённый отсчёт.
-                null -> MmkvManager.decodeSettingsLong(AppConfig.PREF_SN_CONNECTED_AT, 0L)
-                    .takeIf { it > 0L }
-                    ?: System.currentTimeMillis().also { MmkvManager.encodeSettings(AppConfig.PREF_SN_CONNECTED_AT, it) }
-                // Реальный старт в этой сессии → новый отсчёт (сохранённое могло остаться от старого подключения).
-                false -> System.currentTimeMillis().also { MmkvManager.encodeSettings(AppConfig.PREF_SN_CONNECTED_AT, it) }
-                // Уже шёл → не трогаем.
-                true -> _uiState.value.connectedAtMs
-            }
-            _uiState.update { it.copy(connectedAtMs = start) }
-        } else {
-            // Стираем только на реальном переходе running→stopped. Начальное false при запуске
-            // приложения (сервис ещё не опрошен) не должно стирать сохранённый момент старта.
-            if (prev == true) MmkvManager.encodeSettings(AppConfig.PREF_SN_CONNECTED_AT, 0L)
+        if (!isRunning) {
             _uiState.update { it.copy(connectedAtMs = 0L) }
+            return
         }
+        // Момент старта пишет СЕРВИС (CoreServiceManager) при запуске ядра и стирает при остановке.
+        // Экран только читает — поэтому перезапуск/убийство приложения отсчёт не сбивают.
+        // Фолбэк на «сейчас» — только если запись отсутствует (старый сервис до этого фикса).
+        val persisted = MmkvManager.decodeSettingsLong(AppConfig.PREF_SN_CONNECTED_AT, 0L)
+        val start = if (persisted > 0L) persisted else System.currentTimeMillis().also {
+            MmkvManager.encodeSettings(AppConfig.PREF_SN_CONNECTED_AT, it)
+        }
+        _uiState.update { it.copy(connectedAtMs = start) }
     }
-
-    /** Последнее наблюдавшееся состояние сервиса; null = ещё ни разу не видели (свежий запуск экрана). */
-    private var lastRunning: Boolean? = null
 
     /** Живые цифры ЛК по токену (если токен есть). */
     fun refreshStats() {

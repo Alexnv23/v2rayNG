@@ -117,6 +117,10 @@ object CoreServiceManager {
 
         currentVpnInterface = vpnInterface
         launchCore(service, vpnInterface)
+        // SuperNet: момент старта подключения — источник правды для таймера на главной.
+        // Пишет сервис (а не экран), чтобы перезапуск/убийство приложения не сбрасывали отсчёт.
+        // Только первичный старт: reload при смене сети идёт мимо (launchCore(isReload = true)).
+        MmkvManager.encodeSettings(AppConfig.PREF_SN_CONNECTED_AT, System.currentTimeMillis())
         startNetworkMonitor(service)
     }
 
@@ -222,6 +226,9 @@ object CoreServiceManager {
             OlcrtcManager.stop()
             OlcrtcManager.socketProtector = null
         }
+
+        // SuperNet: подключение остановлено — сбросить момент старта (таймер на главной).
+        MmkvManager.encodeSettings(AppConfig.PREF_SN_CONNECTED_AT, 0L)
 
         MessageHelper.sendMsg2UI(service, AppConfig.MSG_STATE_STOP_SUCCESS, "")
         NotificationManager.cancelNotification()
