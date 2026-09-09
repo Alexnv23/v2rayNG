@@ -198,20 +198,41 @@ jobs:
         distribution: 'temurin'
         java-version: '21'
 
-    - name: Build APK
+    # SuperNet: постоянная подпись нашим keystore (те же секреты, что у owenclave).
+    # tr -d '[:space:]' — секрет base64 мог скопироваться с переносами строк.
+    - name: Decode keystore
+      env:
+        KEYSTORE_BASE64: ${{ secrets.OWENCLAVE_KEYSTORE_BASE64 }}
+      run: |
+        if [ -z "$KEYSTORE_BASE64" ]; then echo "ERROR: secret OWENCLAVE_KEYSTORE_BASE64 is empty"; exit 1; fi
+        echo "$KEYSTORE_BASE64" | tr -d '[:space:]' | base64 -d > ${{ github.workspace }}/supernet.jks
+        ls -l ${{ github.workspace }}/supernet.jks
+
+    - name: Build signed release APK (playstore flavor)
+      env:
+        KEYSTORE_PATH: ${{ github.workspace }}/supernet.jks
+        KEYSTORE_PASSWORD: ${{ secrets.OWENCLAVE_KEYSTORE_PASSWORD }}
+        KEY_ALIAS: ${{ secrets.OWENCLAVE_KEY_ALIAS }}
+        KEY_PASSWORD: ${{ secrets.OWENCLAVE_KEY_PASSWORD }}
       run: |
         cd ${{ github.workspace }}/V2rayNG
         echo "sdk.dir=${ANDROID_HOME}" > local.properties
         chmod 755 gradlew
-        ./gradlew assembleDebug
-    
+        ./gradlew assemblePlaystoreRelease
+
+    - name: Verify signature (must be CN=SuperNet, not Android Debug)
+      run: |
+        APK=$(ls ${{ github.workspace }}/V2rayNG/app/build/outputs/apk/playstore/release/*arm64-v8a*.apk | head -1)
+        echo "APK: $APK"
+        keytool -printcert -jarfile "$APK" | head -5
+
     - name: Upload arm64-v8a APK
       uses: actions/upload-artifact@v7
       if: ${{  success() }}
       with:
         name: arm64-v8a
         retention-days: 5
-        path: ${{ github.workspace }}/V2rayNG/app/build/outputs/apk/*/debug/*arm64-v8a*.apk
+        path: ${{ github.workspace }}/V2rayNG/app/build/outputs/apk/playstore/release/*arm64-v8a*.apk
 
     - name: Upload armeabi-v7a APK
       uses: actions/upload-artifact@v7
@@ -219,7 +240,7 @@ jobs:
       with:
         name: armeabi-v7a
         retention-days: 5
-        path: ${{ github.workspace }}/V2rayNG/app/build/outputs/apk/*/debug/*armeabi-v7a*.apk
+        path: ${{ github.workspace }}/V2rayNG/app/build/outputs/apk/playstore/release/*armeabi-v7a*.apk
 
   sign-and-release:
     needs: build
