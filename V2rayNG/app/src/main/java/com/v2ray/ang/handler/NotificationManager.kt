@@ -15,6 +15,7 @@ import com.v2ray.ang.AppConfig
 import com.v2ray.ang.R
 import com.v2ray.ang.core.CoreServiceManager
 import com.v2ray.ang.dto.entities.ProfileItem
+import com.v2ray.ang.enums.EConfigType
 import com.v2ray.ang.extension.delay
 import com.v2ray.ang.extension.toSpeedString
 import com.v2ray.ang.ui.main.MainActivity
@@ -93,7 +94,13 @@ object NotificationManager {
 
         mBuilder = NotificationCompat.Builder(service, channelId)
             .setSmallIcon(R.drawable.ic_stat_name)
-            .setContentTitle(currentConfig?.remarks ?: service.getString(R.string.app_name))
+            // SuperNet: для «Запасного канала» (olcRTC) НЕ показываем реальное имя (supernet-paris)
+            // в шторке — палево. Даём бренд-метку, как в приложении. Остальные профили — как есть.
+            .setContentTitle(
+                if (currentConfig?.configType == EConfigType.OLCRTC)
+                    service.getString(R.string.sn_loc_backup_name)
+                else currentConfig?.remarks ?: service.getString(R.string.app_name)
+            )
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setOngoing(true)
             .setShowWhen(false)
