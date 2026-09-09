@@ -74,8 +74,10 @@ fun HomeScreen(
 
     val statusText = stringResource(if (isRunning) R.string.sn_status_connected else R.string.sn_status_disconnected)
     val statusColor = if (isRunning) SnGreenOk else MaterialTheme.colorScheme.onSurfaceVariant
+    // Для «Запасного канала» (olcRTC) не показываем реальное имя из подписки — только бренд-метку.
+    val displayName = if (state.selectedIsBackup) stringResource(R.string.sn_loc_backup_name) else state.selectedName
     val statusSub = if (isRunning) {
-        (state.selectedName.ifEmpty { "SuperNet" }) + " · " + stringResource(R.string.sn_status_protected)
+        (displayName.ifEmpty { "SuperNet" }) + " · " + stringResource(R.string.sn_status_protected)
     } else {
         stringResource(R.string.sn_status_tap_to_connect)
     }
@@ -201,7 +203,7 @@ fun HomeScreen(
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        state.selectedName.ifEmpty { stringResource(R.string.sn_choose_location) },
+                        displayName.ifEmpty { stringResource(R.string.sn_choose_location) },
                         color = MaterialTheme.colorScheme.onSurface,
                         fontWeight = FontWeight.SemiBold,
                         fontSize = 18.sp,

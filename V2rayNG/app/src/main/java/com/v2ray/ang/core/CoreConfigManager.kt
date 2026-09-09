@@ -203,6 +203,7 @@ object CoreConfigManager {
 
         // User routing rules (policyGroupBalancerTags rewrites TAG_PROXY→balancer when main is POLICYGROUP).
         configureRouting(configContext, v2rayConfig, policyGroupBalancerTags)
+        configureSnDirectDomains(configContext, v2rayConfig)
         configureFakeDns(v2rayConfig)
         configureDns(configContext, v2rayConfig, policyGroupBalancerTags)
         configureLocalDns(configContext, v2rayConfig)
@@ -1153,6 +1154,26 @@ object CoreConfigManager {
     /**
      * Configure routing domain strategy and append enabled user rules.
      */
+    /**
+     * SuperNet: при активном «Запасном канале» (OLCRTC) домены кабинета/подписки
+     * (AppConfig.SN_SUB_DIRECT_DOMAINS) идут напрямую, минуя обход.
+     * Причина: olcrtc-socks не достаёт до lk/panel.supernet-tech.ru → обновление/добавление
+     * подписки при включённом обходе падало (SSL closed), а прямой фолбэк тоже уходил в туннель.
+     * Правило вставляется ПЕРВЫМ, чтобы иметь приоритет над остальными. Для обычных
+     * профилей ничего не меняется — там подписка через прокси работает.
+     */
+    private fun configureSnDirectDomains(configContext: CoreConfigContext, v2rayConfig: V2rayConfig) {
+        val primaryIsOlcrtc = configContext.resolvedOutbounds.firstOrNull()?.profile?.configType == EConfigType.OLCRTC
+        if (!primaryIsOlcrtc) return
+        v2rayConfig.routing.rules.add(
+            0,
+            V2rayConfig.RoutingBean.RulesBean(
+                domain = AppConfig.SN_SUB_DIRECT_DOMAINS,
+                outboundTag = AppConfig.TAG_DIRECT,
+            )
+        )
+    }
+
     private fun configureRouting(
         configContext: CoreConfigContext,
         v2rayConfig: V2rayConfig,

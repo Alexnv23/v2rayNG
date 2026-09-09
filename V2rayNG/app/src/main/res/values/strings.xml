@@ -654,4 +654,6 @@
     <string name="sn_settings_advanced_sub">Engine settings for experienced users</string>
     <string name="sn_settings_advanced_profiles">Advanced profile list</string>
     <string name="sn_settings_advanced_profiles_sub">Full profile manager with groups and editing</string>
+    <string name="sn_loc_backup_sub">reserve key</string>
+    <string name="sn_loc_backup_name">Whitelist</string>
 </resources>

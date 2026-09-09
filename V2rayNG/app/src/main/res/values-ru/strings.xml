@@ -656,4 +656,6 @@
     <string name="sn_settings_advanced_sub">Настройки движка для опытных</string>
     <string name="sn_settings_advanced_profiles">Расширенный список профилей</string>
     <string name="sn_settings_advanced_profiles_sub">Полный менеджер профилей с группами и правкой</string>
+    <string name="sn_loc_backup_sub">резервный ключ</string>
+    <string name="sn_loc_backup_name">Белые списки</string>
 </resources>

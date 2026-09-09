@@ -77,6 +77,12 @@ object AppConfig {
     // SuperNet: запасной канал olcRTC
     /** SuperNet: последний обычный (не olcRTC) профиль — чтобы вернуться из «Запасного канала». */
     const val PREF_SN_LAST_NORMAL_GUID = "pref_sn_last_normal_guid"
+    /**
+     * SuperNet: домены кабинета/подписки, которые при активном «Запасном канале» (olcRTC)
+     * идут напрямую, минуя обход — иначе обновление подписки через olcrtc-socks падает.
+     * Синтаксис xray: "domain:" = домен и все поддомены (lk., panel.).
+     */
+    val SN_SUB_DIRECT_DOMAINS = listOf("domain:supernet-tech.ru")
     const val PREF_OLCRTC_DNS = "pref_olcrtc_dns"
     const val DNS_OLCRTC_FALLBACK = "1.1.1.1:53"
     const val PORT_OLCRTC_SOCKS = "10809"

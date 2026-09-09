@@ -182,7 +182,9 @@ private fun LocationCard(
     val iconContent = if (selected) SnBlack else SnGold
     val name = server.profile.remarks
     val isBackup = server.profile.configType == EConfigType.OLCRTC
-    val typeLabel = if (isBackup) stringResource(R.string.sn_backup_channel) else server.profile.configType.name
+    // Для «Запасного канала» скрываем реальное имя (напр. «Париж») — показываем только бренд-метку.
+    val displayName = if (isBackup) stringResource(R.string.sn_loc_backup_name) else name
+    val typeLabel = if (isBackup) stringResource(R.string.sn_loc_backup_sub) else server.profile.configType.name
 
     Surface(
         onClick = onClick,
@@ -216,7 +218,7 @@ private fun LocationCard(
             Spacer(Modifier.width(14.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = name,
+                    text = displayName,
                     color = onContainer,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold,
