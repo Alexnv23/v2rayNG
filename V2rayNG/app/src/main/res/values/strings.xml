@@ -581,7 +581,7 @@
     <string name="sn_stat_white_limit">WHITE LIMIT</string>
     <string name="sn_stat_of_gb">of %1$s GB</string>
     <string name="sn_quick_cabinet">Account</string>
-    <string name="sn_quick_telegram">Telegram</string>
+    <string name="sn_quick_telegram">Channel</string>
     <string name="sn_quick_faq">FAQ</string>
     <string name="sn_quick_support">Support</string>
     <string name="sn_backup_channel">Backup channel</string>

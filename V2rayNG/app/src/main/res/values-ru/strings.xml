@@ -581,7 +581,7 @@
     <string name="sn_stat_white_limit">БЕЛЫЙ ЛИМИТ</string>
     <string name="sn_stat_of_gb">из %1$s ГБ</string>
     <string name="sn_quick_cabinet">Кабинет</string>
-    <string name="sn_quick_telegram">Telegram</string>
+    <string name="sn_quick_telegram">Канал</string>
     <string name="sn_quick_faq">Вопросы</string>
     <string name="sn_quick_support">Поддержка</string>
     <string name="sn_backup_channel">Запасной канал</string>

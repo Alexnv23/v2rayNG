@@ -382,7 +382,10 @@ object SettingsManager {
      * @return The number of concurrent real-ping tests (clamped to 1..64).
      */
     fun getRealPingConcurrency(): Int {
-        val value = MmkvManager.decodeSettingsString(AppConfig.PREF_REAL_PING_CONCURRENCY)?.toIntOrNull() ?: 16
+        // SuperNet 1.3.8: дефолт снижен 16→4. На телефоне 16 одновременных замеров (каждый = временное
+        // ядро xray + HTTP-запрос) душат сеть/CPU → живые локации ловят таймаут = ложный красный и
+        // пляшущие цифры. 4 параллельно даёт ровные, точные значения (тест чуть дольше — приемлемо).
+        val value = MmkvManager.decodeSettingsString(AppConfig.PREF_REAL_PING_CONCURRENCY)?.toIntOrNull() ?: 4
         return value.coerceIn(1, 128)
     }
 
