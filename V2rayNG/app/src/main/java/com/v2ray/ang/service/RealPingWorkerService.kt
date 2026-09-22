@@ -23,6 +23,12 @@ import kotlinx.coroutines.sync.withLock
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicInteger
 
+// SuperNet: каждый measureOutboundDelay поднимает временный инстанс заново, поэтому первый
+// замер часто ловит холодный старт (рукопожатие Reality) и даёт выброс (1500+ мс). Меряем
+// несколько раз и берём МИНИМУМ — карточка показывает ровное значение, а не скачет 1547↔91.
+private const val SN_REALPING_PROBES = 3        // сколько проб реального пинга на локацию
+private const val SN_REALPING_GOOD_MS = 150L    // проба ≤ этого = уже ровно, лишние пробы не делаем
+
 internal object RealPingExecutionLimiter {
     private val customConfigMutex = Mutex()
 
@@ -131,10 +137,18 @@ class RealPingWorkerService(
             return retFailure
         }
         return RealPingExecutionLimiter.run(config.configType) {
-            // SuperNet: один сбой запроса не должен красить локацию — повторяем замер один раз.
+            // SuperNet: мерим до SN_REALPING_PROBES раз и берём ЛУЧШИЙ (минимальный) результат —
+            // это отсекает холодный выброс первого рукопожатия. Ранний выход: если проба уже
+            // быстрая (≤ SN_REALPING_GOOD_MS) — не тратим время на остальные. Красим красным
+            // (best = -1) только если ВСЕ пробы упали.
             val url = SettingsManager.getDelayTestUrl()
-            val first = CoreNativeManager.measureOutboundDelay(configResult.content, url)
-            if (first > 0L) first else CoreNativeManager.measureOutboundDelay(configResult.content, url)
+            var best = -1L
+            for (i in 0 until SN_REALPING_PROBES) {
+                val t = CoreNativeManager.measureOutboundDelay(configResult.content, url)
+                if (t > 0L && (best < 0L || t < best)) best = t
+                if (best in 1L..SN_REALPING_GOOD_MS) break
+            }
+            best
         }
     }
 
