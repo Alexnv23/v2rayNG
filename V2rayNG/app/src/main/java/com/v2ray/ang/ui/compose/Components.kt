@@ -19,7 +19,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsBottomHeight
+import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.foundation.text.selection.TextSelectionColors
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
@@ -51,9 +53,12 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
@@ -314,4 +319,31 @@ fun ReorderableGridItem(
     ) {
         content()
     }
+}
+
+/**
+ * SuperNet: заголовок экрана в одну строку с автоподбором размера под ширину.
+ * Раньше заголовки стояли фиксированным 30sp — на узких телефонах «Локации» и др.
+ * переносились на вторую строку. BasicText.autoSize ужимает шрифт в пределах
+ * [minFontSize; maxFontSize], пока текст влезает в одну строку; если и на минимуме
+ * не влез — многоточие. Ширину задаёт вызывающий (weight(1f) в Row или fillMaxWidth).
+ */
+@Composable
+fun SnScreenTitle(
+    text: String,
+    modifier: Modifier = Modifier,
+    color: Color = MaterialTheme.colorScheme.onSurface,
+    minFontSize: TextUnit = 18.sp,
+    maxFontSize: TextUnit = 30.sp,
+) {
+    BasicText(
+        text = text,
+        modifier = modifier,
+        color = { color },
+        maxLines = 1,
+        softWrap = false,
+        overflow = TextOverflow.Ellipsis,
+        autoSize = TextAutoSize.StepBased(minFontSize = minFontSize, maxFontSize = maxFontSize, stepSize = 1.sp),
+        style = TextStyle(fontWeight = FontWeight.Bold, fontFamily = FontFamily.Serif),
+    )
 }

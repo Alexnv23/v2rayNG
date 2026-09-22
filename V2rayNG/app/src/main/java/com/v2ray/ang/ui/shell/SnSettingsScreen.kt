@@ -29,12 +29,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.v2ray.ang.BuildConfig
 import com.v2ray.ang.R
+import com.v2ray.ang.ui.compose.SnScreenTitle
 import com.v2ray.ang.ui.compose.SnBlack
 import com.v2ray.ang.ui.compose.SnGold
 
@@ -70,12 +70,9 @@ fun SnSettingsScreen(
             IconButton(onClick = onBack) {
                 Icon(painterResource(R.drawable.ic_arrow_back_24dp), contentDescription = stringResource(R.string.acc_back), tint = MaterialTheme.colorScheme.onSurface)
             }
-            Text(
-                stringResource(R.string.title_settings),
-                color = MaterialTheme.colorScheme.onSurface,
-                fontWeight = FontWeight.Bold,
-                fontSize = 30.sp,
-                fontFamily = FontFamily.Serif,
+            SnScreenTitle(
+                text = stringResource(R.string.title_settings),
+                modifier = Modifier.weight(1f),
             )
         }
 

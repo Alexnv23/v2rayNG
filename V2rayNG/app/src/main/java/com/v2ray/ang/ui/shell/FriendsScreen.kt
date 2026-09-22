@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.v2ray.ang.R
+import com.v2ray.ang.ui.compose.SnScreenTitle
 import com.v2ray.ang.ui.compose.SnBlack
 import com.v2ray.ang.ui.compose.SnCardBg
 import com.v2ray.ang.ui.compose.SnCardBorder
@@ -76,12 +77,9 @@ fun FriendsScreen(
             .padding(horizontal = 18.dp)
             .padding(top = 16.dp, bottom = 120.dp),
     ) {
-        Text(
-            stringResource(R.string.sn_tab_friends),
-            color = MaterialTheme.colorScheme.onSurface,
-            fontWeight = FontWeight.Bold,
-            fontSize = 30.sp,
-            fontFamily = FontFamily.Serif,
+        SnScreenTitle(
+            text = stringResource(R.string.sn_tab_friends),
+            modifier = Modifier.fillMaxWidth(),
         )
         Spacer(Modifier.height(18.dp))
 

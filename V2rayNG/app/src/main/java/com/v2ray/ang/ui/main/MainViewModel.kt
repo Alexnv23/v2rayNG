@@ -692,10 +692,10 @@ class MainViewModel(
     }
 
     /**
-     * SuperNet: тест всех локаций — переключаемся на самую большую группу (подписку) и меряем задержку.
-     * С 1.3.7 — быстрый режим (tcping: TCP-коннект к ноде, таймаут 1 с), а не «реальный пинг» с поднятием
-     * временного ядра на каждую локацию: тот был медленный и цифры плясали. Реальный тест по-прежнему
-     * доступен на расширенном экране (TestRealAllServers).
+     * SuperNet: тест всех локаций — переключаемся на самую большую группу (подписку) и меряем РЕАЛЬНУЮ
+     * задержку через соединение (measureOutboundDelay на тест-урл). Быстрый tcping убрали: он мигал
+     * красным/зелёным (одиночный TCP-коннект на мобиле то проходит, то нет). Реальный замер стабильнее;
+     * от одиночного сбоя защищает повтор в startRealPing. Запускается по кнопке и авто при заходе на экран.
      */
     private fun snTestAllLocations() {
         val groups = uiState.value.groups
@@ -705,7 +705,7 @@ class MainViewModel(
             dataSource.setSelectedSubscriptionId(target.id)
             _uiState.update { it.copy(selectedGroupId = target.id) }
         }
-        testAllRealPing(onlyTcp = true)
+        testAllRealPing()
     }
 
     /** SuperNet: удалить подписку целиком (профили + подписки + токен кабинета). Сервис останавливает Activity. */

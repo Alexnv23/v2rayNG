@@ -33,13 +33,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.v2ray.ang.R
 import com.v2ray.ang.handler.SnAccountManager
+import com.v2ray.ang.ui.compose.SnScreenTitle
 import com.v2ray.ang.ui.compose.SnGold
 import com.v2ray.ang.ui.home.HomeViewModel
 
@@ -74,13 +74,10 @@ fun DevicesScreen(homeViewModel: HomeViewModel, onBack: () -> Unit) {
             IconButton(onClick = onBack) {
                 Icon(painterResource(R.drawable.ic_arrow_back_24dp), contentDescription = stringResource(R.string.acc_back), tint = MaterialTheme.colorScheme.onSurface)
             }
-            Text(
-                stringResource(R.string.sn_devices_title),
-                color = MaterialTheme.colorScheme.onSurface,
-                fontWeight = FontWeight.Bold,
-                fontSize = 26.sp,
-                fontFamily = FontFamily.Serif,
+            SnScreenTitle(
+                text = stringResource(R.string.sn_devices_title),
                 modifier = Modifier.weight(1f),
+                maxFontSize = 26.sp,
             )
             IconButton(onClick = { homeViewModel.refreshStats() }, enabled = !loading && !busy) {
                 Icon(painterResource(R.drawable.ic_sn_refresh_24dp), contentDescription = stringResource(R.string.sn_devices_refresh), tint = SnGold)

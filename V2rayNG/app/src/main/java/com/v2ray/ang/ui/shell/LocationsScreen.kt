@@ -25,15 +25,18 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -42,6 +45,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.v2ray.ang.R
 import com.v2ray.ang.dto.entities.ServersCache
 import com.v2ray.ang.enums.EConfigType
+import com.v2ray.ang.ui.compose.SnScreenTitle
 import com.v2ray.ang.ui.compose.SnBlack
 import com.v2ray.ang.ui.compose.SnCardBg
 import com.v2ray.ang.ui.compose.SnCardBorder
@@ -80,6 +84,17 @@ fun LocationsScreen(
         compareBy<ServersCache> { it.profile.configType == EConfigType.OLCRTC }
     )
 
+    // SuperNet 1.3.7: авто-замер пинга при заходе на экран (как удобно юзеру — открыл и видит).
+    // remember (не Saveable) → сбрасывается при уходе с вкладки, поэтому мерим заново на каждый заход.
+    // Ждём, пока локации подгрузятся; не запускаем, если тест уже идёт (напр. юзер нажал кнопку).
+    var didAutoTest by remember { mutableStateOf(false) }
+    LaunchedEffect(ordered.isNotEmpty(), uiState.isTesting) {
+        if (!didAutoTest && ordered.isNotEmpty() && !uiState.isTesting) {
+            didAutoTest = true
+            onAction(MainAction.SnTestAllLocations)
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -93,12 +108,8 @@ fun LocationsScreen(
                 .padding(start = 18.dp, end = 8.dp, top = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(
-                stringResource(R.string.sn_tab_locations),
-                color = MaterialTheme.colorScheme.onSurface,
-                fontWeight = FontWeight.Bold,
-                fontSize = 30.sp,
-                fontFamily = FontFamily.Serif,
+            SnScreenTitle(
+                text = stringResource(R.string.sn_tab_locations),
                 modifier = Modifier.weight(1f),
             )
             if (uiState.isTesting) {

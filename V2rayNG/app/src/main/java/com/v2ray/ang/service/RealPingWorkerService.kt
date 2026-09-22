@@ -108,6 +108,9 @@ class RealPingWorkerService(
         val retFailure = -1L
 
         val config = MmkvManager.decodeServerConfig(guid) ?: return retFailure
+        // SuperNet: «Запасной канал» (olcRTC) — локальный псевдо-транспорт, реальный пинг к нему не
+        // применим и красит карточку красным. 0 = «не измерялось» (без точки), а не -1 = «сломан».
+        if (config.configType == EConfigType.OLCRTC) return 0L
         if (!config.configType.isComplexType()
             && config.configType != EConfigType.HYSTERIA2
             && config.configType != EConfigType.WIREGUARD
@@ -128,7 +131,10 @@ class RealPingWorkerService(
             return retFailure
         }
         return RealPingExecutionLimiter.run(config.configType) {
-            CoreNativeManager.measureOutboundDelay(configResult.content, SettingsManager.getDelayTestUrl())
+            // SuperNet: один сбой запроса не должен красить локацию — повторяем замер один раз.
+            val url = SettingsManager.getDelayTestUrl()
+            val first = CoreNativeManager.measureOutboundDelay(configResult.content, url)
+            if (first > 0L) first else CoreNativeManager.measureOutboundDelay(configResult.content, url)
         }
     }
 
