@@ -113,6 +113,10 @@ fun LocationsScreen(
             IconButton(onClick = { onAction(MainAction.UpdateSubscriptions) }) {
                 Icon(painterResource(R.drawable.ic_sn_refresh_24dp), contentDescription = stringResource(R.string.sn_loc_refresh_sub), tint = MaterialTheme.colorScheme.onSurface)
             }
+            // SuperNet 1.3.7: сканер QR — тот же импорт, что и у старого экрана (MainAction.ImportQRcode → камера).
+            IconButton(onClick = { onAction(MainAction.ImportQRcode) }) {
+                Icon(painterResource(R.drawable.ic_scan_24dp), contentDescription = stringResource(R.string.sn_loc_scan_qr), tint = MaterialTheme.colorScheme.onSurface)
+            }
             IconButton(onClick = { onAction(MainAction.ImportClipboard) }) {
                 Icon(painterResource(R.drawable.ic_sn_paste_24dp), contentDescription = stringResource(R.string.sn_loc_import_clipboard), tint = MaterialTheme.colorScheme.onSurface)
             }

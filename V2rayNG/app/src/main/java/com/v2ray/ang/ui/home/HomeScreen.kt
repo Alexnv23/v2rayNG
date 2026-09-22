@@ -21,6 +21,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -34,6 +35,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
@@ -41,9 +43,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.v2ray.ang.R
+import com.v2ray.ang.ui.compose.SnBlack
 import com.v2ray.ang.ui.compose.SnGold
+import com.v2ray.ang.ui.compose.SnGoldDim
 import com.v2ray.ang.ui.compose.SnCardBg
 import com.v2ray.ang.ui.compose.SnCardBorder
 import com.v2ray.ang.ui.compose.SnGreenOk
@@ -164,7 +169,7 @@ fun HomeScreen(
                     }
                     Spacer(Modifier.size(10.dp))
                     Surface(
-                        onClick = { onOpenUrl(upd.downloadUrl) },
+                        onClick = { homeViewModel.showUpdateDialog() },
                         shape = RoundedCornerShape(12.dp), color = SnGold,
                     ) {
                         Text(
@@ -180,6 +185,24 @@ fun HomeScreen(
                     )
                 }
             }
+        }
+
+        // ── Карточка обновления (SuperNet 1.3.7): версия/размер/дата/что нового → скачать → установить ──
+        val updInfo = state.update
+        if (state.updateDialog && updInfo != null) {
+            val ctx = LocalContext.current
+            SnUpdateDialog(
+                info = updInfo,
+                downloading = state.updateDownloading,
+                progress = state.updateProgress,
+                error = state.updateError,
+                onUpdate = { homeViewModel.downloadAndInstallUpdate(ctx) },
+                onLater = { homeViewModel.hideUpdateDialog() },
+                onOpenBrowser = {
+                    homeViewModel.hideUpdateDialog()
+                    onOpenUrl(updInfo.downloadUrl)
+                },
+            )
         }
 
         Spacer(Modifier.height(28.dp))
@@ -417,3 +440,172 @@ private const val URL_LK = "https://lk.supernet-tech.ru"
 private const val URL_FAQ = "https://lk.supernet-tech.ru/?open=faq"
 private const val TG_CHANNEL = "supernet_vpn_access"
 private const val TG_SUPPORT = "SuperNetConnect_bot"
+
+/**
+ * SuperNet 1.3.7: карточка обновления в стиле магазина приложений —
+ * версия, размер, дата, «что нового», кнопки «Обновить» / «Не сейчас».
+ * Во время скачивания — прогресс; при ошибке — предложить скачать в браузере.
+ */
+@Composable
+private fun SnUpdateDialog(
+    info: com.v2ray.ang.handler.SnUpdateManager.Info,
+    downloading: Boolean,
+    progress: Int,
+    error: Boolean,
+    onUpdate: () -> Unit,
+    onLater: () -> Unit,
+    onOpenBrowser: () -> Unit,
+) {
+    Dialog(onDismissRequest = { if (!downloading) onLater() }) {
+        Surface(
+            shape = RoundedCornerShape(24.dp),
+            color = SnCardBg,
+            border = BorderStroke(1.dp, SnGold.copy(alpha = 0.5f)),
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 18.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("🆕", fontSize = 26.sp)
+                    Spacer(Modifier.size(10.dp))
+                    Text(
+                        stringResource(R.string.sn_update_title),
+                        color = MaterialTheme.colorScheme.onSurface,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp,
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+                Spacer(Modifier.height(14.dp))
+
+                // ── Факты: версия / размер / дата ──
+                Surface(
+                    shape = RoundedCornerShape(14.dp),
+                    color = Color(0x14D9B95C),
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp)) {
+                        SnUpdateFactRow(stringResource(R.string.sn_update_fact_version), info.version)
+                        info.sizeMb?.let {
+                            Spacer(Modifier.height(6.dp))
+                            SnUpdateFactRow(stringResource(R.string.sn_update_fact_size), stringResource(R.string.sn_update_size_mb, fmtMb(it)))
+                        }
+                        info.date?.let {
+                            Spacer(Modifier.height(6.dp))
+                            SnUpdateFactRow(stringResource(R.string.sn_update_fact_date), it)
+                        }
+                    }
+                }
+
+                // ── Что нового ──
+                if (info.changelog.isNotEmpty()) {
+                    Spacer(Modifier.height(14.dp))
+                    Text(
+                        stringResource(R.string.sn_update_whats_new),
+                        color = SnGold, fontWeight = FontWeight.Bold, fontSize = 13.sp,
+                    )
+                    Spacer(Modifier.height(6.dp))
+                    info.changelog.forEach { line ->
+                        Row(modifier = Modifier.padding(vertical = 2.dp)) {
+                            Text("•", color = SnGold, fontSize = 14.sp)
+                            Spacer(Modifier.size(8.dp))
+                            Text(line, color = MaterialTheme.colorScheme.onSurface, fontSize = 14.sp, modifier = Modifier.weight(1f))
+                        }
+                    }
+                }
+
+                Spacer(Modifier.height(10.dp))
+                Text(
+                    stringResource(R.string.sn_update_hint),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp,
+                )
+
+                // ── Прогресс / ошибка ──
+                if (downloading) {
+                    Spacer(Modifier.height(14.dp))
+                    if (progress >= 0) {
+                        LinearProgressIndicator(
+                            progress = { progress / 100f },
+                            color = SnGold,
+                            trackColor = Color(0x33D9B95C),
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                        Spacer(Modifier.height(6.dp))
+                        Text(
+                            stringResource(R.string.sn_update_downloading_pct, progress),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp,
+                        )
+                    } else {
+                        LinearProgressIndicator(color = SnGold, trackColor = Color(0x33D9B95C), modifier = Modifier.fillMaxWidth())
+                        Spacer(Modifier.height(6.dp))
+                        Text(
+                            stringResource(R.string.sn_update_downloading),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp,
+                        )
+                    }
+                } else if (error) {
+                    Spacer(Modifier.height(12.dp))
+                    Text(
+                        stringResource(R.string.sn_update_download_failed),
+                        color = Color(0xFFF44336), fontSize = 13.sp,
+                    )
+                }
+
+                Spacer(Modifier.height(18.dp))
+
+                // ── Кнопки ──
+                if (error) {
+                    Surface(
+                        onClick = onOpenBrowser,
+                        shape = RoundedCornerShape(14.dp), color = SnGold,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text(
+                            stringResource(R.string.sn_update_open_browser),
+                            color = SnBlack, fontWeight = FontWeight.Bold, fontSize = 15.sp, textAlign = TextAlign.Center,
+                            modifier = Modifier.padding(vertical = 13.dp),
+                        )
+                    }
+                } else {
+                    Surface(
+                        onClick = { if (!downloading) onUpdate() },
+                        shape = RoundedCornerShape(14.dp),
+                        color = if (downloading) SnGoldDim else SnGold,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text(
+                            stringResource(R.string.sn_update_button),
+                            color = SnBlack, fontWeight = FontWeight.Bold, fontSize = 15.sp, textAlign = TextAlign.Center,
+                            modifier = Modifier.padding(vertical = 13.dp),
+                        )
+                    }
+                }
+                Spacer(Modifier.height(8.dp))
+                Surface(
+                    onClick = { if (!downloading) onLater() },
+                    shape = RoundedCornerShape(14.dp),
+                    color = Color.Transparent,
+                    border = BorderStroke(1.dp, SnCardBorder),
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text(
+                        stringResource(R.string.sn_update_later),
+                        color = if (downloading) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
+                        fontSize = 15.sp, textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(vertical = 12.dp),
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SnUpdateFactRow(label: String, value: String) {
+    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Text(label, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp, modifier = Modifier.weight(1f))
+        Text(value, color = MaterialTheme.colorScheme.onSurface, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+    }
+}
+
+private fun fmtMb(v: Double): String =
+    if (v >= 100) v.toInt().toString() else String.format(java.util.Locale.US, "%.1f", v)

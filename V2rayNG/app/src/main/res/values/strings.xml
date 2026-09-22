@@ -562,6 +562,17 @@
     <string name="sn_update_available">New version %1$s available</string>
     <string name="sn_update_hint">Installs over the current one — nothing to delete</string>
     <string name="sn_update_button">Update</string>
+    <string name="sn_update_title">Update SuperNet?</string>
+    <string name="sn_update_fact_version">Version</string>
+    <string name="sn_update_fact_size">Update size</string>
+    <string name="sn_update_fact_date">Released</string>
+    <string name="sn_update_size_mb">%1$s MB</string>
+    <string name="sn_update_whats_new">What\'s new</string>
+    <string name="sn_update_later">Not now</string>
+    <string name="sn_update_downloading">Downloading…</string>
+    <string name="sn_update_downloading_pct">Downloading… %1$d%%</string>
+    <string name="sn_update_download_failed">Couldn\'t download the update. Check your connection or download it in the browser.</string>
+    <string name="sn_update_open_browser">Download in browser</string>
     <string name="sn_choose_location">Choose location</string>
     <string name="sn_location_tap_hint">tap to change location</string>
     <string name="sn_location_backup_hint">backup channel · messengers and sites</string>
@@ -588,8 +599,9 @@
     <string name="sn_loc_cancel_test">Stop check</string>
     <string name="sn_loc_refresh_sub">Refresh subscription</string>
     <string name="sn_loc_import_clipboard">Paste from clipboard</string>
+    <string name="sn_loc_scan_qr">Scan QR code</string>
     <string name="sn_loc_add">Add</string>
-    <string name="sn_loc_empty">No locations yet. Open your subscription link from the bot or paste it from the clipboard.</string>
+    <string name="sn_loc_empty">No locations yet. Open your subscription link from the bot, scan its QR code, or paste it from the clipboard.</string>
 
     <string name="sn_friends_free_open">Free month unlocked!</string>
     <string name="sn_friends_free_next">Free month for friends</string>

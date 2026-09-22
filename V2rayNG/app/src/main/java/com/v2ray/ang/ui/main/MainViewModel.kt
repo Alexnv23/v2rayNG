@@ -691,7 +691,12 @@ class MainViewModel(
         _uiState.update { it.copy(selectedGuid = dataSource.getSelectServer()) }
     }
 
-    /** SuperNet: тест всех локаций — переключаемся на самую большую группу (подписку) и гоним реальный тест. */
+    /**
+     * SuperNet: тест всех локаций — переключаемся на самую большую группу (подписку) и меряем задержку.
+     * С 1.3.7 — быстрый режим (tcping: TCP-коннект к ноде, таймаут 1 с), а не «реальный пинг» с поднятием
+     * временного ядра на каждую локацию: тот был медленный и цифры плясали. Реальный тест по-прежнему
+     * доступен на расширенном экране (TestRealAllServers).
+     */
     private fun snTestAllLocations() {
         val groups = uiState.value.groups
         if (groups.isEmpty()) return
@@ -700,7 +705,7 @@ class MainViewModel(
             dataSource.setSelectedSubscriptionId(target.id)
             _uiState.update { it.copy(selectedGroupId = target.id) }
         }
-        testAllRealPing()
+        testAllRealPing(onlyTcp = true)
     }
 
     /** SuperNet: удалить подписку целиком (профили + подписки + токен кабинета). Сервис останавливает Activity. */

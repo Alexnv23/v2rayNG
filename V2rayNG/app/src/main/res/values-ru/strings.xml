@@ -562,6 +562,17 @@
     <string name="sn_update_available">Доступна версия %1$s</string>
     <string name="sn_update_hint">Ставится поверх текущей — ничего удалять не нужно</string>
     <string name="sn_update_button">Обновить</string>
+    <string name="sn_update_title">Обновить SuperNet?</string>
+    <string name="sn_update_fact_version">Версия</string>
+    <string name="sn_update_fact_size">Размер обновления</string>
+    <string name="sn_update_fact_date">Дата выхода</string>
+    <string name="sn_update_size_mb">%1$s МБ</string>
+    <string name="sn_update_whats_new">Что нового</string>
+    <string name="sn_update_later">Не сейчас</string>
+    <string name="sn_update_downloading">Скачиваем…</string>
+    <string name="sn_update_downloading_pct">Скачиваем… %1$d%%</string>
+    <string name="sn_update_download_failed">Не удалось скачать обновление. Проверьте связь или скачайте через браузер.</string>
+    <string name="sn_update_open_browser">Скачать в браузере</string>
     <string name="sn_choose_location">Выбрать локацию</string>
     <string name="sn_location_tap_hint">нажмите, чтобы сменить локацию</string>
     <string name="sn_location_backup_hint">запасной канал · мессенджеры и сайты</string>
@@ -588,8 +599,9 @@
     <string name="sn_loc_cancel_test">Остановить проверку</string>
     <string name="sn_loc_refresh_sub">Обновить подписку</string>
     <string name="sn_loc_import_clipboard">Вставить из буфера</string>
+    <string name="sn_loc_scan_qr">Сканировать QR-код</string>
     <string name="sn_loc_add">Добавить</string>
-    <string name="sn_loc_empty">Локаций пока нет. Откройте ссылку подписки из бота или вставьте её из буфера обмена.</string>
+    <string name="sn_loc_empty">Локаций пока нет. Откройте ссылку подписки из бота, отсканируйте её QR-код или вставьте из буфера обмена.</string>
 
     <string name="sn_friends_free_open">Бесплатный месяц открыт!</string>
     <string name="sn_friends_free_next">Бесплатный месяц за друзей</string>

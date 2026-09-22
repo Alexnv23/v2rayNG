@@ -34,6 +34,14 @@ data class HomeUiState(
     val cachedDisplayName: String? = null,
     /** Доступное обновление приложения (version.json на ЛК); null — нет или скрыто. */
     val update: SnUpdateManager.Info? = null,
+    /** Открыта карточка обновления (версия/размер/дата/что нового). */
+    val updateDialog: Boolean = false,
+    /** Идёт скачивание APK. */
+    val updateDownloading: Boolean = false,
+    /** Прогресс скачивания 0..100; -1 — размер неизвестен (крутилка без процентов). */
+    val updateProgress: Int = 0,
+    /** Скачать/запустить установку не удалось — экран предложит скачать в браузере. */
+    val updateError: Boolean = false,
     val hasToken: Boolean = false,
     val statsLoading: Boolean = false,
     val statsError: Boolean = false,
@@ -140,7 +148,47 @@ class HomeViewModel : ViewModel() {
     }
 
     fun dismissUpdate() {
-        _uiState.update { it.copy(update = null) }
+        _uiState.update { it.copy(update = null, updateDialog = false) }
+    }
+
+    private var updateJob: Job? = null
+
+    /** Открыть карточку обновления (по кнопке «Обновить» на баннере). */
+    fun showUpdateDialog() {
+        if (uiState.value.update == null) return
+        _uiState.update { it.copy(updateDialog = true, updateError = false) }
+    }
+
+    /** «Не сейчас»: закрыть карточку, баннер остаётся. Скачивание, если шло, прерывается. */
+    fun hideUpdateDialog() {
+        updateJob?.cancel()
+        updateJob = null
+        _uiState.update { it.copy(updateDialog = false, updateDownloading = false, updateProgress = 0) }
+    }
+
+    /**
+     * «Обновить»: скачать APK в кэш и открыть системный установщик. Контекст — только
+     * applicationContext (скачивание переживает пересоздание экрана, установщик стартует с NEW_TASK).
+     * Успех → карточка закрывается сама (дальше рулит Android). Ошибка → updateError, кнопка «в браузере».
+     */
+    fun downloadAndInstallUpdate(context: android.content.Context) {
+        val info = uiState.value.update ?: return
+        if (uiState.value.updateDownloading) return
+        val appContext = context.applicationContext
+        updateJob?.cancel()
+        _uiState.update { it.copy(updateDownloading = true, updateProgress = 0, updateError = false) }
+        updateJob = viewModelScope.launch(Dispatchers.IO) {
+            val apk = SnUpdateManager.download(appContext, info) { pct ->
+                _uiState.update { it.copy(updateProgress = pct) }
+            }
+            val launched = apk != null && SnUpdateManager.install(appContext, apk)
+            withContext(Dispatchers.Main) {
+                _uiState.update {
+                    if (launched) it.copy(updateDownloading = false, updateDialog = false, updateProgress = 100)
+                    else it.copy(updateDownloading = false, updateError = true)
+                }
+            }
+        }
     }
 
     /** Живые цифры ЛК по токену (если токен есть). */

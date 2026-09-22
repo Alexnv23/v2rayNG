@@ -136,6 +136,9 @@ class RealPingWorkerService(
         val retFailure = -1L
 
         val config = MmkvManager.decodeServerConfig(guid) ?: return retFailure
+        // SuperNet: «Запасной канал» (olcRTC) — не TCP-сервер, tcping к нему бессмыслен.
+        // 0 = «не измерялось» (без точки на карточке), а не -1 = «красный/сломан».
+        if (config.configType == EConfigType.OLCRTC) return 0L
         if (!config.configType.isComplexType()
             && config.configType != EConfigType.HYSTERIA2
             && config.configType != EConfigType.WIREGUARD
