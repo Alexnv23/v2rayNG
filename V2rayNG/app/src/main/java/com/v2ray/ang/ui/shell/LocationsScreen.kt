@@ -64,6 +64,8 @@ fun LocationsScreen(
     mainViewModel: MainViewModel,
     isRunning: Boolean,
     onAction: (MainAction) -> Unit,
+    // SuperNet: активно сезонное оформление (с сервера) — фон делаем прозрачным, чтобы сцена просвечивала.
+    decorActive: Boolean = false,
 ) {
     val uiState by mainViewModel.uiState.collectAsStateWithLifecycle()
     val groups = uiState.groups
@@ -98,7 +100,7 @@ fun LocationsScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
+            .background(if (decorActive) Color.Transparent else MaterialTheme.colorScheme.background)
             .statusBarsPadding(),
     ) {
         // ── Заголовок + действия (как в owenclave: тест, обновить, вставить, +) ──

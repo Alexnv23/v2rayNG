@@ -63,6 +63,8 @@ fun FriendsScreen(
     homeViewModel: HomeViewModel,
     onOpenUrl: (String) -> Unit,
     onShareText: (String) -> Unit,
+    // SuperNet: активно сезонное оформление — фон прозрачный, чтобы сцена просвечивала.
+    decorActive: Boolean = false,
 ) {
     val state by homeViewModel.uiState.collectAsStateWithLifecycle()
     LaunchedEffect(Unit) { homeViewModel.refreshStats() }
@@ -71,7 +73,7 @@ fun FriendsScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
+            .background(if (decorActive) Color.Transparent else MaterialTheme.colorScheme.background)
             .verticalScroll(rememberScrollState())
             .statusBarsPadding()
             .padding(horizontal = 18.dp)

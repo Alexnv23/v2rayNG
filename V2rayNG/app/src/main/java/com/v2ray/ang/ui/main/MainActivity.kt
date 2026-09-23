@@ -183,7 +183,16 @@ class MainActivity : HelperBaseComponentActivity() {
             }
         }
 
+        // SuperNet: сезонное оформление — слоем под ВСЕМИ вкладками. Прозрачными делаем только
+        // Home/Локации/Друзья (им передаём decorActive); Настройки/Устройства остаются со своим
+        // фоном и просто перекрывают сцену.
+        val snDecorActive = homeState.theme.enabled && homeState.decorEnabled && homeState.theme.hasBg
         Box(modifier = Modifier.fillMaxSize()) {
+            com.v2ray.ang.ui.compose.SnSeasonalBackground(
+                enabled = homeState.theme.enabled && homeState.decorEnabled,
+                anim = homeState.theme.anim,
+                bgPath = homeState.theme.bgPath,
+            )
             when (tab) {
                 SnTab.HOME -> HomeScreen(
                     homeViewModel = homeViewModel,
@@ -201,12 +210,14 @@ class MainActivity : HelperBaseComponentActivity() {
                     mainViewModel = mainViewModel,
                     isRunning = uiState.isRunning,
                     onAction = onAction,
+                    decorActive = snDecorActive,
                 )
 
                 SnTab.FRIENDS -> FriendsScreen(
                     homeViewModel = homeViewModel,
                     onOpenUrl = { url -> Utils.openUri(this@MainActivity, url) },
                     onShareText = { text -> shareText(text) },
+                    decorActive = snDecorActive,
                 )
 
                 SnTab.SETTINGS -> SnSettingsScreen(

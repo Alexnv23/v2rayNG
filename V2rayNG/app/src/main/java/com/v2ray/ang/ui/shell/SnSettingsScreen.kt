@@ -79,6 +79,10 @@ fun SnSettingsScreen(
         }
 
         Spacer(Modifier.height(12.dp))
+        SectionLabel(stringResource(R.string.sn_settings_section_decor))
+        SwitchRow(stringResource(R.string.sn_settings_decor), stringResource(R.string.sn_settings_decor_sub), decorEnabled, onDecorChange)
+
+        Spacer(Modifier.height(18.dp))
         SectionLabel(stringResource(R.string.sn_settings_section_account))
 
         SettingRow(stringResource(R.string.sn_devices_title), stringResource(R.string.sn_settings_devices_sub), onOpenDevices)
@@ -97,10 +101,6 @@ fun SnSettingsScreen(
         SettingRow(stringResource(R.string.sn_settings_per_app), stringResource(R.string.sn_settings_per_app_sub), onOpenPerApp)
         Spacer(Modifier.height(10.dp))
         SwitchRow(stringResource(R.string.sn_settings_bypass_lan), stringResource(R.string.sn_settings_bypass_lan_sub), bypassLan, onBypassLanChange)
-
-        Spacer(Modifier.height(18.dp))
-        SectionLabel(stringResource(R.string.sn_settings_section_decor))
-        SwitchRow(stringResource(R.string.sn_settings_decor), stringResource(R.string.sn_settings_decor_sub), decorEnabled, onDecorChange)
 
         Spacer(Modifier.height(18.dp))
         SectionLabel(stringResource(R.string.sn_settings_section_more))

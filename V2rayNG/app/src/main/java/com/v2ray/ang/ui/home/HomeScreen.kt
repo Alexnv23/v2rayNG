@@ -93,15 +93,20 @@ fun HomeScreen(
         stringResource(R.string.sn_status_tap_to_connect)
     }
 
-    // SuperNet: сезонное оформление (с сервера) — слоем СЗАДИ контента. Когда активно и включено
-    // пользователем, фон Column делаем прозрачным, чтобы сцена и анимация просвечивали.
+    // SuperNet: сезонное оформление рисуется на уровне оболочки (MainActivity), под всеми вкладками.
+    // Здесь только делаем фон Column прозрачным, чтобы сцена/анимация просвечивали, и вешаем тени
+    // тексту (на светлом фоне без карточки иначе не читается).
     val decorActive = state.theme.enabled && state.decorEnabled && state.theme.hasBg
-    Box(modifier = Modifier.fillMaxSize()) {
-        com.v2ray.ang.ui.compose.SnSeasonalBackground(
-            enabled = state.theme.enabled && state.decorEnabled,
-            anim = state.theme.anim,
-            bgPath = state.theme.bgPath,
+    val onBgShadow = if (decorActive) androidx.compose.ui.text.TextStyle(
+        shadow = androidx.compose.ui.graphics.Shadow(
+            color = Color.Black.copy(alpha = 0.9f),
+            offset = androidx.compose.ui.geometry.Offset(0f, 2f),
+            blurRadius = 12f,
         )
+    ) else androidx.compose.ui.text.TextStyle.Default
+    // При активном оформлении обводим карточки тонкой золотой каёмкой (как круг подключения),
+    // чтобы они читались поверх сцены; на обычном чёрном фоне — прежняя мягкая граница.
+    val cardBorder = if (decorActive) SnGold.copy(alpha = 0.6f) else SnCardBorder
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -131,12 +136,14 @@ fun HomeScreen(
                     fontWeight = FontWeight.Bold,
                     fontSize = 24.sp,
                     fontFamily = FontFamily.Serif,
+                    style = onBgShadow,
                 )
                 Text(
                     text = (state.stats?.displayName ?: state.cachedDisplayName)?.let { stringResource(R.string.sn_hello_name, it) }
                         ?: stringResource(R.string.sn_premium_access),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = if (decorActive) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
                     fontSize = 13.sp,
+                    style = onBgShadow,
                 )
             }
             Surface(
@@ -235,13 +242,15 @@ fun HomeScreen(
             color = statusColor,
             fontWeight = FontWeight.Bold,
             fontSize = 22.sp,
+            style = onBgShadow,
             modifier = Modifier.fillMaxWidth(),
             textAlign = TextAlign.Center,
         )
         Text(
             statusSub,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = if (decorActive) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
             fontSize = 14.sp,
+            style = onBgShadow,
             modifier = Modifier.fillMaxWidth(),
             textAlign = TextAlign.Center,
         )
@@ -262,6 +271,7 @@ fun HomeScreen(
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
                 fontFamily = FontFamily.Monospace,
+                style = onBgShadow,
                 modifier = Modifier.fillMaxWidth(),
                 textAlign = TextAlign.Center,
             )
@@ -274,7 +284,7 @@ fun HomeScreen(
             onClick = onOpenLocations,
             shape = RoundedCornerShape(18.dp),
             color = SnCardBg,
-            border = BorderStroke(1.dp, SnCardBorder),
+            border = BorderStroke(1.dp, cardBorder),
             modifier = Modifier.fillMaxWidth(),
         ) {
             Row(
@@ -310,6 +320,7 @@ fun HomeScreen(
                             title = stringResource(R.string.sn_stat_access),
                             big = a.days.toString(),
                             unit = stringResource(R.string.sn_stat_days),
+                            borderColor = cardBorder,
                         )
                     }
                     if (whiteOk) {
@@ -319,6 +330,7 @@ fun HomeScreen(
                             big = fmtGb(a.whiteUsedGb),
                             unit = stringResource(R.string.sn_stat_of_gb, fmtGb(a.whiteLimitGb)),
                             progress = (a.whitePercent / 100.0).toFloat().coerceIn(0f, 1f),
+                            borderColor = cardBorder,
                         )
                     }
                 }
@@ -329,10 +341,10 @@ fun HomeScreen(
 
         // ── Быстрые кнопки ──
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            QuickButton("👤", stringResource(R.string.sn_quick_cabinet), Modifier.weight(1f)) { onOpenUrl(URL_LK) }
-            QuickButton("✈️", stringResource(R.string.sn_quick_telegram), Modifier.weight(1f)) { onOpenTelegram(TG_CHANNEL) }
-            QuickButton("❓", stringResource(R.string.sn_quick_faq), Modifier.weight(1f)) { onOpenUrl(URL_FAQ) }
-            QuickButton("💬", stringResource(R.string.sn_quick_support), Modifier.weight(1f)) { onOpenTelegram(TG_SUPPORT) }
+            QuickButton("👤", stringResource(R.string.sn_quick_cabinet), Modifier.weight(1f), cardBorder) { onOpenUrl(URL_LK) }
+            QuickButton("✈️", stringResource(R.string.sn_quick_telegram), Modifier.weight(1f), cardBorder) { onOpenTelegram(TG_CHANNEL) }
+            QuickButton("❓", stringResource(R.string.sn_quick_faq), Modifier.weight(1f), cardBorder) { onOpenUrl(URL_FAQ) }
+            QuickButton("💬", stringResource(R.string.sn_quick_support), Modifier.weight(1f), cardBorder) { onOpenTelegram(TG_SUPPORT) }
         }
 
         Spacer(Modifier.height(14.dp))
@@ -367,7 +379,6 @@ fun HomeScreen(
             }
         }
     }
-    }
 }
 
 @Composable
@@ -377,11 +388,12 @@ private fun StatCard(
     big: String,
     unit: String,
     progress: Float = -1f,
+    borderColor: Color = SnCardBorder,
 ) {
     Surface(
         shape = RoundedCornerShape(16.dp),
         color = SnCardBg,
-        border = BorderStroke(1.dp, SnCardBorder),
+        border = BorderStroke(1.dp, borderColor),
         modifier = modifier,
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -415,12 +427,12 @@ private fun StatCard(
 }
 
 @Composable
-private fun QuickButton(emoji: String, label: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
+private fun QuickButton(emoji: String, label: String, modifier: Modifier = Modifier, borderColor: Color = SnCardBorder, onClick: () -> Unit) {
     Surface(
         onClick = onClick,
         shape = RoundedCornerShape(16.dp),
         color = SnCardBg,
-        border = BorderStroke(1.dp, SnCardBorder),
+        border = BorderStroke(1.dp, borderColor),
         modifier = modifier,
     ) {
         Column(
