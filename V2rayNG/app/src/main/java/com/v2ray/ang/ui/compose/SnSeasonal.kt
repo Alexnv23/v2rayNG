@@ -248,58 +248,55 @@ private fun DrawScope.drawLight(t: Long, w: Float, h: Float, spots: ArrayList<Sp
 // ── LAKE: дорожка от солнца по воде + капли (строго в полосе воды) ──
 private fun DrawScope.drawLake(t: Long, w: Float, h: Float, ripples: ArrayList<Ripple>) {
     val ft = t.toFloat()
-    val wy0 = h * 0.40f
-    val wy1 = h * 0.52f
-    val sx = w * 0.80f
-    // дорожка от солнца — узкая, справа, мягкое мерцание
+    // Полоса воды в кадре nov.webp и колонка солнечной дорожки — ПРЯМО ПОД СОЛНЦЕМ (справа, ~0.87W;
+    // замерено по фону/скрину: блик у пирса). Колонка широкая и мягкая, чтоб попадать при разном кропе.
+    val wy0 = h * 0.42f
+    val wy1 = h * 0.60f
+    val sx = w * 0.87f
+    // ── солнечная дорожка: вертикальная мерцающая колонка под солнцем ──
     var y = wy0
     while (y < wy1) {
-        val depth = (y - wy0) / (wy1 - wy0)
-        val tw = 0.5f + 0.5f * sin(ft * 0.045f + y * 0.14f)
-        val ww = 6f + depth * 30f
-        val a = (0.14f + 0.26f * tw) * (0.55f + depth * 0.5f)
+        val depth = (y - wy0) / (wy1 - wy0)              // 0 сверху → 1 у берега
+        val tw = 0.5f + 0.5f * sin(ft * 0.11f + y * 0.06f)   // чуть быстрее — переливается как волна
+        val ww = w * (0.035f + depth * 0.06f)            // книзу шире
+        val a = (0.22f + 0.30f * tw) * (0.5f + depth * 0.5f)
         drawRect(
             brush = Brush.horizontalGradient(
                 0.0f to Color(0x00FFC46E),
-                0.5f to Color(0xFFFFDC96).copy(alpha = a),
+                0.5f to Color(0xFFFFE6A8).copy(alpha = a),
                 1.0f to Color(0x00FFC46E),
                 startX = sx - ww,
                 endX = sx + ww,
             ),
-            topLeft = Offset(0f, y),
-            size = Size(w, 2.2f),
+            topLeft = Offset(sx - ww, y),
+            size = Size(ww * 2f, 3f),
             blendMode = BlendMode.Plus,
         )
-        if (Random.nextFloat() < 0.17f) {
-            val bx = sx + (Random.nextFloat() - 0.5f) * ww * 1.5f
-            drawRect(
-                color = Color(0xFFFFF5C8).copy(alpha = a * 1.3f),
-                topLeft = Offset(bx, y),
-                size = Size(3f + Random.nextFloat() * 4f, 1.6f),
-                blendMode = BlendMode.Plus,
-            )
-        }
-        y += 6f
+        y += 5f
     }
-    // капли — только в полосе воды, слева-центр (мимо мостика справа)
-    if (t % 42L == 0L) {
-        val rx = w * (0.08f + Random.nextFloat() * 0.58f)
-        ripples.add(Ripple(rx, wy0 + Random.nextFloat() * (wy1 - wy0), 2f, 0))
+    // ── редкие пузырьки-кольца на воде (не дождь — раз-два всплыло) ──
+    if (Random.nextFloat() < 0.035f) {
+        val rx = w * (0.06f + Random.nextFloat() * 0.9f)
+        val ry = wy0 + Random.nextFloat() * (wy1 - wy0)
+        ripples.add(Ripple(rx, ry, w * 0.004f, 0))
     }
+    val maxR = w * 0.06f
     val it = ripples.iterator()
     while (it.hasNext()) {
         val r = it.next()
-        r.r += 0.42f
+        r.r += w * 0.0016f
         r.life++
-        val a = (0.34f - r.life * 0.005f).coerceAtLeast(0f)
-        if (a > 0f) {
+        val a = (0.55f * (1f - r.r / maxR)).coerceAtLeast(0f)
+        if (a > 0f && r.r < maxR) {
             drawOval(
-                color = Color(0xFFFFE2AA).copy(alpha = a),
-                topLeft = Offset(r.x - r.r, r.y - r.r * 0.32f),
-                size = Size(r.r * 2f, r.r * 0.64f),
-                style = Stroke(width = 1.1f),
+                color = Color(0xFFFFEFC0).copy(alpha = a),
+                topLeft = Offset(r.x - r.r, r.y - r.r * 0.34f),
+                size = Size(r.r * 2f, r.r * 0.68f),
+                style = Stroke(width = 1.6f),
+                blendMode = BlendMode.Plus,
             )
+        } else {
+            it.remove()
         }
-        if (r.life >= 70) it.remove()
     }
 }

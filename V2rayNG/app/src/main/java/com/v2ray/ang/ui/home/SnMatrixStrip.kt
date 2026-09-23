@@ -62,10 +62,11 @@ fun SnMatrixStrip(
         }
     }
 
-    @Suppress("UNUSED_EXPRESSION")
-    tick // читаем состояние — этим драйвим перерисовку каждый кадр
-
     Canvas(modifier = modifier) {
+        // Подписка на кадровый тик ДОЛЖНА быть внутри draw — иначе Canvas не перерисовывается
+        // и глифы «висят» (счётчик кадров меняется, но draw об этом не знает).
+        @Suppress("UNUSED_VARIABLE")
+        val frame = tick
         val w = size.width
         val h = size.height
         if (w <= 0f || h <= 0f) return@Canvas
