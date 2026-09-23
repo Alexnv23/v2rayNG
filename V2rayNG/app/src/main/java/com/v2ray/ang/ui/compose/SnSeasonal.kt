@@ -22,10 +22,10 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.withTransform
-import androidx.compose.ui.graphics.res.imageResource
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import com.v2ray.ang.R
@@ -63,8 +63,13 @@ fun SnSeasonalBackground(
     }
     val bitmap = bg ?: return
 
+    val ctx = LocalContext.current
     val leaf: ImageBitmap? = if (anim == SnThemeManager.Anim.LEAVES) {
-        ImageBitmap.imageResource(R.drawable.sn_leaf)
+        remember {
+            runCatching {
+                android.graphics.BitmapFactory.decodeResource(ctx.resources, R.drawable.sn_leaf)?.asImageBitmap()
+            }.getOrNull()
+        }
     } else null
 
     // Тик кадра: гоним ~60 fps, Canvas перерисовывается на каждое изменение tick.
