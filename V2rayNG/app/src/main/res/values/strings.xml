@@ -584,9 +584,9 @@
     <string name="sn_quick_telegram">Channel</string>
     <string name="sn_quick_faq">FAQ</string>
     <string name="sn_quick_support">Support</string>
-    <string name="sn_backup_channel">Backup channel</string>
-    <string name="sn_backup_channel_active">Backup channel on · tap to switch back</string>
-    <string name="sn_backup_channel_unavailable">Backup channel will appear in your subscription</string>
+    <string name="sn_backup_channel">Reserve channel</string>
+    <string name="sn_backup_channel_active">Reserve channel on · tap to switch back</string>
+    <string name="sn_backup_channel_unavailable">Reserve channel will appear in your subscription</string>
 
     <!-- SuperNet shell 1.3.0 -->
     <string name="sn_tab_home">Home</string>

@@ -354,28 +354,33 @@ fun HomeScreen(
         Surface(
             onClick = onToggleBackupChannel,
             shape = RoundedCornerShape(16.dp),
-            color = if (backupActive) SnCardBg else Color.Transparent,
-            border = BorderStroke(1.dp, if (backupActive) SnGold else SnCardBorder),
+            color = SnCardBg,
+            border = BorderStroke(1.dp, if (backupActive) SnGold else cardBorder),
             modifier = Modifier.fillMaxWidth(),
         ) {
-            Row(
-                modifier = Modifier.padding(vertical = 15.dp),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text("🆘  ", fontSize = 15.sp)
-                Text(
-                    stringResource(
-                        when {
-                            backupActive -> R.string.sn_backup_channel_active
-                            state.backupAvailable -> R.string.sn_backup_channel
-                            else -> R.string.sn_backup_channel_unavailable
-                        }
-                    ),
-                    color = if (backupActive) SnGold else MaterialTheme.colorScheme.onSurface,
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Medium,
-                )
+            Box(contentAlignment = Alignment.Center) {
+                // Канал активен — вместо чёрного фона течёт «матрица» (как на кнопке, но без пульса).
+                if (backupActive) {
+                    SnMatrixStrip(modifier = Modifier.matchParentSize())
+                }
+                Row(
+                    modifier = Modifier.padding(vertical = 15.dp),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        stringResource(
+                            when {
+                                backupActive -> R.string.sn_backup_channel_active
+                                state.backupAvailable -> R.string.sn_backup_channel
+                                else -> R.string.sn_backup_channel_unavailable
+                            }
+                        ),
+                        color = if (backupActive) SnGold else MaterialTheme.colorScheme.onSurface,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Medium,
+                    )
+                }
             }
         }
     }

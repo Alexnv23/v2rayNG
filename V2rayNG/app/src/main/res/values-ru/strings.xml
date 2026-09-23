@@ -584,9 +584,9 @@
     <string name="sn_quick_telegram">Канал</string>
     <string name="sn_quick_faq">Вопросы</string>
     <string name="sn_quick_support">Поддержка</string>
-    <string name="sn_backup_channel">Запасной канал</string>
-    <string name="sn_backup_channel_active">Запасной канал включён · нажмите, чтобы вернуться</string>
-    <string name="sn_backup_channel_unavailable">Запасной канал появится в вашей подписке</string>
+    <string name="sn_backup_channel">Резервный канал</string>
+    <string name="sn_backup_channel_active">Резервный канал включён · нажмите, чтобы вернуться</string>
+    <string name="sn_backup_channel_unavailable">Резервный канал появится в вашей подписке</string>
 
     <!-- SuperNet shell 1.3.0 -->
     <string name="sn_tab_home">Главная</string>
