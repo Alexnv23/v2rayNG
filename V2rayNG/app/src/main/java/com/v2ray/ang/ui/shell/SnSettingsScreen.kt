@@ -105,11 +105,10 @@ fun SnSettingsScreen(
         Spacer(Modifier.height(18.dp))
         SectionLabel(stringResource(R.string.sn_settings_section_more))
 
+        // SuperNet: «Расширенные настройки» и «Расширенный список профилей» УБРАНЫ намеренно —
+        // старый менеджер профилей даёт расшарить/просмотреть конфиг подписки (секретная подписка,
+        // шаринг профилей запрещён). Оставлен только Logcat (журнал для поддержки, утечки конфига нет).
         SettingRow(stringResource(R.string.title_logcat), stringResource(R.string.sn_settings_logcat_sub), onOpenLogcat)
-        Spacer(Modifier.height(10.dp))
-        SettingRow(stringResource(R.string.sn_settings_advanced), stringResource(R.string.sn_settings_advanced_sub), onOpenAdvancedSettings)
-        Spacer(Modifier.height(10.dp))
-        SettingRow(stringResource(R.string.sn_settings_advanced_profiles), stringResource(R.string.sn_settings_advanced_profiles_sub), onOpenAdvancedProfiles)
 
         Spacer(Modifier.height(18.dp))
         SectionLabel(stringResource(R.string.sn_settings_section_about))
