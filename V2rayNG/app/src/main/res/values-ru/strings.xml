@@ -667,6 +667,9 @@
     <string name="sn_settings_per_app_sub">Выбрать приложения, которые идут напрямую</string>
     <string name="sn_settings_bypass_lan">Обход локальной сети</string>
     <string name="sn_settings_bypass_lan_sub">Принтеры, телевизор и домашние устройства остаются доступны</string>
+    <string name="sn_settings_section_decor">ОФОРМЛЕНИЕ</string>
+    <string name="sn_settings_decor">Анимация оформления</string>
+    <string name="sn_settings_decor_sub">Сезонный фон с анимацией на главной. Выключите, если хотите чёрный экран или телефон слабый.</string>
     <string name="sn_settings_logcat_sub">Журнал для поддержки</string>
     <string name="sn_settings_advanced">Расширенные настройки</string>
     <string name="sn_settings_advanced_sub">Настройки движка для опытных</string>

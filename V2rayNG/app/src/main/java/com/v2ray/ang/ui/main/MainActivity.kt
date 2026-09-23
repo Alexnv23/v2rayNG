@@ -221,6 +221,8 @@ class MainActivity : HelperBaseComponentActivity() {
                         homeViewModel.setBypassLan(enabled)
                         LauncherManager.restartService(this@MainActivity)
                     },
+                    decorEnabled = homeState.decorEnabled,
+                    onDecorChange = { enabled -> homeViewModel.setDecor(enabled) },
                     onOpenLogcat = { navigateTo(MainDestination.Logcat) },
                     onOpenAdvancedSettings = { navigateTo(MainDestination.Settings) },
                     onOpenAdvancedProfiles = { tab = SnTab.ADVANCED },

@@ -665,6 +665,9 @@
     <string name="sn_settings_per_app_sub">Choose apps that connect directly</string>
     <string name="sn_settings_bypass_lan">Bypass local network</string>
     <string name="sn_settings_bypass_lan_sub">Printers, TV and home devices stay reachable</string>
+    <string name="sn_settings_section_decor">APPEARANCE</string>
+    <string name="sn_settings_decor">Seasonal animation</string>
+    <string name="sn_settings_decor_sub">Seasonal animated background on Home. Turn off for a plain screen or on slow phones.</string>
     <string name="sn_settings_logcat_sub">Logs for support</string>
     <string name="sn_settings_advanced">Advanced settings</string>
     <string name="sn_settings_advanced_sub">Engine settings for experienced users</string>

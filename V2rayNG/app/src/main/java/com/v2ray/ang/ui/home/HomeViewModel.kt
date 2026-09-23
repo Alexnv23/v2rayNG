@@ -2,10 +2,12 @@ package com.v2ray.ang.ui.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.v2ray.ang.AngApplication
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.enums.EConfigType
 import com.v2ray.ang.handler.MmkvManager
 import com.v2ray.ang.handler.SnAccountManager
+import com.v2ray.ang.handler.SnThemeManager
 import com.v2ray.ang.handler.SnUpdateManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -49,6 +51,10 @@ data class HomeUiState(
     val connectedAtMs: Long = 0L,
     /** Настройка «Обход локальной сети» (PREF_VPN_BYPASS_LAN: "1" = вкл, "2" = выкл). */
     val bypassLan: Boolean = true,
+    /** Сезонное оформление с сервера (theme.json). OFF — нет оформления. */
+    val theme: SnThemeManager.Theme = SnThemeManager.OFF,
+    /** Пользователь включил оформление (PREF_SN_DECOR_ON, по умолчанию вкл). */
+    val decorEnabled: Boolean = true,
 )
 
 /** Одноразовые сообщения для тостов (текст уже с сервера или пустой — тогда экран подставит свой). */
@@ -68,6 +74,35 @@ class HomeViewModel : ViewModel() {
 
     init {
         loadBypassLan()
+        loadDecor()
+    }
+
+    /** Прочитать пользовательский тумблер «Анимация оформления» (по умолчанию вкл). */
+    fun loadDecor() {
+        viewModelScope.launch(Dispatchers.IO) {
+            val on = MmkvManager.decodeSettingsString(AppConfig.PREF_SN_DECOR_ON, "1") != "0"
+            withContext(Dispatchers.Main) { _uiState.update { it.copy(decorEnabled = on) } }
+        }
+    }
+
+    /** Переключить сезонное оформление (только визуальный слой, ничего не рестартит). */
+    fun setDecor(enabled: Boolean) {
+        _uiState.update { it.copy(decorEnabled = enabled) }
+        viewModelScope.launch(Dispatchers.IO) {
+            MmkvManager.encodeSettings(AppConfig.PREF_SN_DECOR_ON, if (enabled) "1" else "0")
+        }
+    }
+
+    private var themeChecked = false
+
+    /** Загрузить сезонную тему с сервера — один раз за запуск, тихо в фоне. */
+    fun checkTheme(force: Boolean = false) {
+        if (themeChecked && !force) return
+        themeChecked = true
+        viewModelScope.launch(Dispatchers.IO) {
+            val theme = SnThemeManager.load(AngApplication.application)
+            withContext(Dispatchers.Main) { _uiState.update { it.copy(theme = theme) } }
+        }
     }
 
     /** Прочитать текущее значение «Обход локальной сети» из настроек. */

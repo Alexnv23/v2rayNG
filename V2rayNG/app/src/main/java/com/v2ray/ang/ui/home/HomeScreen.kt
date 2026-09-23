@@ -79,6 +79,8 @@ fun HomeScreen(
         // Обновление проверяем при первом заходе и повторно, когда тоннель поднялся
         // (на белых списках без тоннеля до ЛК не достучаться).
         homeViewModel.checkUpdate(force = isRunning)
+        // Сезонное оформление тянем с сервера тем же образом (тихо, в фоне).
+        homeViewModel.checkTheme(force = isRunning)
     }
 
     val statusText = stringResource(if (isRunning) R.string.sn_status_connected else R.string.sn_status_disconnected)
@@ -91,10 +93,19 @@ fun HomeScreen(
         stringResource(R.string.sn_status_tap_to_connect)
     }
 
+    // SuperNet: сезонное оформление (с сервера) — слоем СЗАДИ контента. Когда активно и включено
+    // пользователем, фон Column делаем прозрачным, чтобы сцена и анимация просвечивали.
+    val decorActive = state.theme.enabled && state.decorEnabled && state.theme.hasBg
+    Box(modifier = Modifier.fillMaxSize()) {
+        com.v2ray.ang.ui.compose.SnSeasonalBackground(
+            enabled = state.theme.enabled && state.decorEnabled,
+            anim = state.theme.anim,
+            bgPath = state.theme.bgPath,
+        )
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
+            .background(if (decorActive) Color.Transparent else MaterialTheme.colorScheme.background)
             .verticalScroll(rememberScrollState())
             .statusBarsPadding()
             .navigationBarsPadding()
@@ -355,6 +366,7 @@ fun HomeScreen(
                 )
             }
         }
+    }
     }
 }
 
