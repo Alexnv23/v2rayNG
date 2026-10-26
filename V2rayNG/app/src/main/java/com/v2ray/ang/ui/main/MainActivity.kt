@@ -232,6 +232,8 @@ class MainActivity : HelperBaseComponentActivity() {
                         homeViewModel.setBypassLan(enabled)
                         LauncherManager.restartService(this@MainActivity)
                     },
+                    autoStart = homeState.autoStart,
+                    onAutoStartChange = { enabled -> homeViewModel.setAutoStart(enabled) },
                     decorEnabled = homeState.decorEnabled,
                     onDecorChange = { enabled -> homeViewModel.setDecor(enabled) },
                     onOpenLogcat = { navigateTo(MainDestination.Logcat) },

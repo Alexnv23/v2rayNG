@@ -3,8 +3,6 @@ package com.v2ray.ang.handler
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.util.LogUtil
 import org.json.JSONObject
-import java.net.HttpURLConnection
-import java.net.URL
 
 /**
  * SuperNet: «кабинет в приложении» — живые цифры юзера с ЛК по app-токену.
@@ -69,30 +67,28 @@ object SnAccountManager {
         val devices: List<Device> = emptyList(),
     )
 
-    /** Синхронный сетевой вызов — только с Dispatchers.IO. null при любой ошибке. */
-    fun fetch(token: String): Stats? {
+    /**
+     * Синхронный сетевой вызов — только с Dispatchers.IO. null при любой ошибке.
+     * [viaCore] = подключение поднято → запрос идёт через туннель (см. SnNet), иначе напрямую.
+     */
+    fun fetch(token: String, viaCore: Boolean = false): Stats? {
         if (token.isBlank()) return null
-        var conn: HttpURLConnection? = null
         return try {
-            conn = (URL("$BASE/api/app/stats/$token").openConnection() as HttpURLConnection).apply {
-                connectTimeout = TIMEOUT_MS
-                readTimeout = TIMEOUT_MS
-                requestMethod = "GET"
+            SnNet.request("$BASE/api/app/stats/$token", viaCore) { conn ->
+                conn.connectTimeout = TIMEOUT_MS
+                conn.readTimeout = TIMEOUT_MS
+                conn.requestMethod = "GET"
+                if (conn.responseCode != 200) {
+                    LogUtil.w(AppConfig.TAG, "SnAccount: stats HTTP ${conn.responseCode}")
+                    null
+                } else {
+                    val body = conn.inputStream.bufferedReader().use { it.readText() }
+                    parseStats(JSONObject(body))
+                }
             }
-            if (conn.responseCode != 200) {
-                LogUtil.w(AppConfig.TAG, "SnAccount: stats HTTP ${conn.responseCode}")
-                return null
-            }
-            val body = conn.inputStream.bufferedReader().use { it.readText() }
-            parseStats(JSONObject(body))
         } catch (e: Exception) {
             LogUtil.w(AppConfig.TAG, "SnAccount: stats fetch failed: ${e.javaClass.simpleName}")
             null
-        } finally {
-            try {
-                conn?.disconnect()
-            } catch (_: Exception) {
-            }
         }
     }
 
@@ -133,40 +129,34 @@ object SnAccountManager {
         )
     }
 
-    /** Удалить устройство. Синхронно — только с Dispatchers.IO. Pair(успех, сообщение сервера/ошибки). */
-    fun revokeDevice(token: String, deviceId: Long): Pair<Boolean, String> {
+    /** Удалить устройство. Синхронно — только с Dispatchers.IO. Pair(успех, сообщение сервера/ошибки). [viaCore] — как в fetch. */
+    fun revokeDevice(token: String, deviceId: Long, viaCore: Boolean = false): Pair<Boolean, String> {
         if (token.isBlank() || deviceId <= 0L) return false to ""
-        var conn: HttpURLConnection? = null
         return try {
-            conn = (URL("$BASE/api/app/devices/$token/$deviceId/revoke").openConnection() as HttpURLConnection).apply {
-                connectTimeout = TIMEOUT_MS
-                readTimeout = TIMEOUT_MS
-                requestMethod = "POST"
-                doOutput = true
-                setRequestProperty("Content-Length", "0")
+            SnNet.request("$BASE/api/app/devices/$token/$deviceId/revoke", viaCore) { conn ->
+                conn.connectTimeout = TIMEOUT_MS
+                conn.readTimeout = TIMEOUT_MS
+                conn.requestMethod = "POST"
+                conn.doOutput = true
+                conn.setRequestProperty("Content-Length", "0")
+                conn.outputStream.use { }
+                val code = conn.responseCode
+                val stream = if (code in 200..299) conn.inputStream else conn.errorStream
+                val body = try {
+                    stream?.bufferedReader()?.use { it.readText() } ?: ""
+                } catch (_: Exception) {
+                    ""
+                }
+                val msg = try {
+                    JSONObject(body).let { it.optString("message", it.optString("detail", "")) }
+                } catch (_: Exception) {
+                    ""
+                }
+                (code in 200..299) to msg
             }
-            conn.outputStream.use { }
-            val code = conn.responseCode
-            val stream = if (code in 200..299) conn.inputStream else conn.errorStream
-            val body = try {
-                stream?.bufferedReader()?.use { it.readText() } ?: ""
-            } catch (_: Exception) {
-                ""
-            }
-            val msg = try {
-                JSONObject(body).let { it.optString("message", it.optString("detail", "")) }
-            } catch (_: Exception) {
-                ""
-            }
-            (code in 200..299) to msg
         } catch (e: Exception) {
             LogUtil.w(AppConfig.TAG, "SnAccount: revoke failed: ${e.javaClass.simpleName}")
             false to (e.message ?: e.javaClass.simpleName)
-        } finally {
-            try {
-                conn?.disconnect()
-            } catch (_: Exception) {
-            }
         }
     }
 }

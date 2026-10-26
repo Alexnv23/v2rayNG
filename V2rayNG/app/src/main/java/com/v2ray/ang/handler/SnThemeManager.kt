@@ -6,8 +6,6 @@ import com.v2ray.ang.util.LogUtil
 import org.json.JSONObject
 import java.io.File
 import java.io.FileOutputStream
-import java.net.HttpURLConnection
-import java.net.URL
 
 /**
  * SuperNet: сезонное оформление Главной, управляется С СЕРВЕРА (одна точка правды).
@@ -31,6 +29,8 @@ object SnThemeManager {
     private const val TIMEOUT_MS = 8000
     private const val DOWNLOAD_TIMEOUT_MS = 20000
     private const val CACHE_DIR = "sn_theme"
+    /** Последний удачно прочитанный theme.json (строкой) — для показа темы без сети. */
+    private const val KEY_LAST = "sn_theme_last_json"
 
     /** Типы анимации, которые умеет рисовать SnSeasonal. Незнакомый тип → NONE (только фон). */
     enum class Anim { LEAVES, LIGHT, LAKE, NONE }
@@ -56,95 +56,134 @@ object SnThemeManager {
     }
 
     /**
-     * Прочитать theme.json и, если нужно, скачать фон в кэш. Возвращает готовую Theme.
-     * При любой сетевой ошибке — OFF (тихо, не мешаем работе аппы). Фон перекачиваем только когда
-     * сменилось имя файла или "v" — иначе берём уже лежащий в кэше (экономим трафик).
+     * Прочитать theme.json и, если нужно, скачать фон в кэш. Возвращает готовую Theme,
+     * или null — если сервер недоступен (сеть/ограничения): тогда экран берёт [cached].
+     * [viaCore] = подключение поднято → запрос идёт через туннель (см. SnNet), иначе напрямую.
+     * Фон перекачиваем только когда сменилось имя файла или "v" — иначе берём уже лежащий в кэше.
+     * Удачно прочитанный theme.json (вместе с докачанным фоном) запоминаем в KEY_LAST — чтобы без сети
+     * показать последнюю тему.
      */
-    fun load(context: Context): Theme {
-        var conn: HttpURLConnection? = null
+    fun load(context: Context, viaCore: Boolean = false): Theme? {
         return try {
-            conn = (URL(THEME_URL).openConnection() as HttpURLConnection).apply {
-                connectTimeout = TIMEOUT_MS
-                readTimeout = TIMEOUT_MS
-                requestMethod = "GET"
-                setRequestProperty("Cache-Control", "no-cache")
+            val raw = SnNet.request(THEME_URL, viaCore) { conn ->
+                conn.connectTimeout = TIMEOUT_MS
+                conn.readTimeout = TIMEOUT_MS
+                conn.requestMethod = "GET"
+                conn.setRequestProperty("Cache-Control", "no-cache")
+                if (conn.responseCode != 200) {
+                    LogUtil.i(AppConfig.TAG, "SnTheme: HTTP ${conn.responseCode}")
+                    null
+                } else {
+                    conn.inputStream.bufferedReader().use { it.readText() }
+                }
+            } ?: return null
+            val j = JSONObject(raw)
+            val theme = fromJson(context, j, download = true, viaCore = viaCore)
+            val wantsBg = j.optString("bg", "").trim().isNotEmpty()
+            if (theme.enabled && wantsBg && theme.bgPath == null) {
+                // Новый фон не докачался — считаем загрузку неудачной: экран покажет прошлую тему
+                // из [cached] (её фон ещё в кэше) и попробует снова после подключения. KEY_LAST не трогаем.
+                return null
             }
-            if (conn.responseCode != 200) {
-                LogUtil.i(AppConfig.TAG, "SnTheme: HTTP ${conn.responseCode}")
-                return OFF
-            }
-            val j = JSONObject(conn.inputStream.bufferedReader().use { it.readText() })
-            if (!j.optBoolean("enabled", false)) return OFF
-            val season = j.optString("season", "")
-            val anim = parseAnim(j.optString("anim", ""))
-            val bgFile = j.optString("bg", "").trim()
-            val ver = j.optInt("v", 1)
-            val bgPath = if (bgFile.isNotEmpty()) ensureBg(context, bgFile, ver) else null
-            Theme(enabled = true, season = season, anim = anim, bgPath = bgPath)
+            MmkvManager.encodeSettings(KEY_LAST, raw)
+            theme
         } catch (e: Exception) {
             LogUtil.w(AppConfig.TAG, "SnTheme: load failed: ${e.javaClass.simpleName}")
-            OFF
-        } finally {
-            try {
-                conn?.disconnect()
-            } catch (_: Exception) {
-            }
+            null
         }
     }
 
     /**
-     * Гарантировать, что фон <bgFile> версии <ver> лежит в кэше; вернуть путь или null.
-     * Ключ кэша = "<ver>_<bgFile>": сменилась версия или имя → качаем заново, старые чистим.
+     * Последняя удачно загруженная тема из кэша, без сети. Фон — только если он уже лежит в кэше.
+     * Нет сохранённой темы → OFF. Синхронно (MMKV + файл) — с Dispatchers.IO.
      */
-    private fun ensureBg(context: Context, bgFile: String, ver: Int): String? {
+    fun cached(context: Context): Theme {
+        val raw = MmkvManager.decodeSettingsString(KEY_LAST)?.takeIf { it.isNotBlank() } ?: return OFF
+        return try {
+            fromJson(context, JSONObject(raw), download = false, viaCore = false)
+        } catch (e: Exception) {
+            LogUtil.w(AppConfig.TAG, "SnTheme: cached theme unreadable: ${e.javaClass.simpleName}")
+            OFF
+        }
+    }
+
+    private fun fromJson(context: Context, j: JSONObject, download: Boolean, viaCore: Boolean): Theme {
+        if (!j.optBoolean("enabled", false)) return OFF
+        val season = j.optString("season", "")
+        val anim = parseAnim(j.optString("anim", ""))
+        val bgFile = j.optString("bg", "").trim()
+        val ver = j.optInt("v", 1)
+        val bgPath = when {
+            bgFile.isEmpty() -> null
+            download -> ensureBg(context, bgFile, ver, viaCore)
+            else -> cachedBg(context, bgFile, ver)
+        }
+        return Theme(enabled = true, season = season, anim = anim, bgPath = bgPath)
+    }
+
+    private fun bgTarget(context: Context, bgFile: String, ver: Int): File {
         val dir = File(context.cacheDir, CACHE_DIR).apply { mkdirs() }
         val safeName = bgFile.substringAfterLast('/').ifBlank { "bg" }
-        val target = File(dir, "${ver}_$safeName")
+        return File(dir, "${ver}_$safeName")
+    }
+
+    private fun cachedBg(context: Context, bgFile: String, ver: Int): String? {
+        val target = bgTarget(context, bgFile, ver)
+        return if (target.exists() && target.length() > 0) target.absolutePath else null
+    }
+
+    /**
+     * Гарантировать, что фон <bgFile> версии <ver> лежит в кэше; вернуть путь или null.
+     * Ключ кэша = "<ver>_<bgFile>": сменилась версия или имя → качаем заново, старые чистим
+     * (только после того, как новый фон докачался целиком — иначе без сети остались бы без фона).
+     */
+    private fun ensureBg(context: Context, bgFile: String, ver: Int, viaCore: Boolean): String? {
+        val target = bgTarget(context, bgFile, ver)
         if (target.exists() && target.length() > 0) return target.absolutePath
-        // Новый фон — чистим прошлые и качаем.
-        dir.listFiles()?.forEach { runCatching { it.delete() } }
+        val dir = target.parentFile ?: return null
         val tmp = File(dir, target.name + ".part")
-        var conn: HttpURLConnection? = null
         return try {
-            conn = (URL(BG_BASE + bgFile).openConnection() as HttpURLConnection).apply {
-                connectTimeout = TIMEOUT_MS
-                readTimeout = DOWNLOAD_TIMEOUT_MS
-                requestMethod = "GET"
-                setRequestProperty("Cache-Control", "no-cache")
-            }
-            if (conn.responseCode != 200) {
-                LogUtil.w(AppConfig.TAG, "SnTheme: bg HTTP ${conn.responseCode}")
-                return null
-            }
-            val total = conn.contentLength.toLong()
-            var done = 0L
-            conn.inputStream.use { input ->
-                FileOutputStream(tmp).use { out ->
-                    val buf = ByteArray(64 * 1024)
-                    while (true) {
-                        val n = input.read(buf)
-                        if (n < 0) break
-                        out.write(buf, 0, n)
-                        done += n
+            val ok = SnNet.request(BG_BASE + bgFile, viaCore) { conn ->
+                conn.connectTimeout = TIMEOUT_MS
+                conn.readTimeout = DOWNLOAD_TIMEOUT_MS
+                conn.requestMethod = "GET"
+                conn.setRequestProperty("Cache-Control", "no-cache")
+                if (conn.responseCode != 200) {
+                    LogUtil.w(AppConfig.TAG, "SnTheme: bg HTTP ${conn.responseCode}")
+                    false
+                } else {
+                    val total = conn.contentLength.toLong()
+                    var done = 0L
+                    conn.inputStream.use { input ->
+                        FileOutputStream(tmp).use { out ->
+                            val buf = ByteArray(64 * 1024)
+                            while (true) {
+                                val n = input.read(buf)
+                                if (n < 0) break
+                                out.write(buf, 0, n)
+                                done += n
+                            }
+                        }
+                    }
+                    if (total > 0 && done != total) {
+                        LogUtil.w(AppConfig.TAG, "SnTheme: bg truncated $done/$total")
+                        false
+                    } else {
+                        LogUtil.i(AppConfig.TAG, "SnTheme: bg downloaded ${target.name} ($done bytes)")
+                        true
                     }
                 }
             }
-            if (total > 0 && done != total) {
-                LogUtil.w(AppConfig.TAG, "SnTheme: bg truncated $done/$total")
-                return null
-            }
+            if (!ok) return null
+            // Новый фон докачан — теперь чистим прошлые и ставим новый на место.
+            dir.listFiles()?.forEach { if (it != tmp) runCatching { it.delete() } }
             if (!tmp.renameTo(target)) return null
-            LogUtil.i(AppConfig.TAG, "SnTheme: bg cached $safeName v$ver ($done bytes)")
             target.absolutePath
         } catch (e: Exception) {
             LogUtil.w(AppConfig.TAG, "SnTheme: bg download failed: ${e.javaClass.simpleName}")
             null
         } finally {
             runCatching { tmp.delete() }
-            try {
-                conn?.disconnect()
-            } catch (_: Exception) {
-            }
         }
     }
 }

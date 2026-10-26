@@ -10,8 +10,6 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
 import java.io.FileOutputStream
-import java.net.HttpURLConnection
-import java.net.URL
 
 /**
  * SuperNet: обновление приложения по нашему ЛК.
@@ -48,21 +46,25 @@ object SnUpdateManager {
         val changelog: List<String> = emptyList(),
     )
 
-    /** null — обновления нет или не удалось проверить (тихо: это не ошибка для юзера). */
-    fun check(): Info? {
-        var conn: HttpURLConnection? = null
+    /**
+     * null — обновления нет или не удалось проверить (тихо: это не ошибка для юзера).
+     * [viaCore] = подключение поднято → запрос идёт через туннель (см. SnNet), иначе напрямую.
+     */
+    fun check(viaCore: Boolean = false): Info? {
         return try {
-            conn = (URL(VERSION_URL).openConnection() as HttpURLConnection).apply {
-                connectTimeout = TIMEOUT_MS
-                readTimeout = TIMEOUT_MS
-                requestMethod = "GET"
-                setRequestProperty("Cache-Control", "no-cache")
-            }
-            if (conn.responseCode != 200) {
-                LogUtil.w(AppConfig.TAG, "SnUpdate: HTTP ${conn.responseCode}")
-                return null
-            }
-            val j = JSONObject(conn.inputStream.bufferedReader().use { it.readText() })
+            val raw = SnNet.request(VERSION_URL, viaCore) { conn ->
+                conn.connectTimeout = TIMEOUT_MS
+                conn.readTimeout = TIMEOUT_MS
+                conn.requestMethod = "GET"
+                conn.setRequestProperty("Cache-Control", "no-cache")
+                if (conn.responseCode != 200) {
+                    LogUtil.w(AppConfig.TAG, "SnUpdate: HTTP ${conn.responseCode}")
+                    null
+                } else {
+                    conn.inputStream.bufferedReader().use { it.readText() }
+                }
+            } ?: return null
+            val j = JSONObject(raw)
             val code = j.optInt("versionCode", 0)
             val version = j.optString("version", "")
             if (code <= 0 || version.isBlank()) return null
@@ -83,11 +85,6 @@ object SnUpdateManager {
         } catch (e: Exception) {
             LogUtil.w(AppConfig.TAG, "SnUpdate: check failed: ${e.javaClass.simpleName}")
             null
-        } finally {
-            try {
-                conn?.disconnect()
-            } catch (_: Exception) {
-            }
         }
     }
 
@@ -103,46 +100,49 @@ object SnUpdateManager {
      * onProgress — проценты 0..100 (или -1, если сервер не отдал Content-Length).
      * Прошлые скачанные APK удаляем, чтобы кэш не рос.
      */
-    fun download(context: Context, info: Info, onProgress: (Int) -> Unit): File? {
+    fun download(context: Context, info: Info, viaCore: Boolean = false, onProgress: (Int) -> Unit): File? {
         val dir = File(context.cacheDir, CACHE_DIR).apply { mkdirs() }
         dir.listFiles()?.forEach { runCatching { it.delete() } }
         val target = File(dir, "SuperNet_${info.version}.apk")
         val tmp = File(dir, target.name + ".part")
-        var conn: HttpURLConnection? = null
         return try {
-            conn = (URL(info.downloadUrl).openConnection() as HttpURLConnection).apply {
-                connectTimeout = TIMEOUT_MS
-                readTimeout = DOWNLOAD_TIMEOUT_MS
-                requestMethod = "GET"
-                setRequestProperty("Cache-Control", "no-cache")
-            }
-            if (conn.responseCode != 200) {
-                LogUtil.w(AppConfig.TAG, "SnUpdate: download HTTP ${conn.responseCode}")
-                return null
-            }
-            val total = conn.contentLength.toLong()
-            var done = 0L
-            var lastPct = -2
-            conn.inputStream.use { input ->
-                FileOutputStream(tmp).use { out ->
-                    val buf = ByteArray(64 * 1024)
-                    while (true) {
-                        val n = input.read(buf)
-                        if (n < 0) break
-                        out.write(buf, 0, n)
-                        done += n
-                        val pct = if (total > 0) ((done * 100) / total).toInt() else -1
-                        if (pct != lastPct) {
-                            lastPct = pct
-                            onProgress(pct)
+            val done = SnNet.request(info.downloadUrl, viaCore) { conn ->
+                conn.connectTimeout = TIMEOUT_MS
+                conn.readTimeout = DOWNLOAD_TIMEOUT_MS
+                conn.requestMethod = "GET"
+                conn.setRequestProperty("Cache-Control", "no-cache")
+                if (conn.responseCode != 200) {
+                    LogUtil.w(AppConfig.TAG, "SnUpdate: download HTTP ${conn.responseCode}")
+                    -1L
+                } else {
+                    val total = conn.contentLength.toLong()
+                    var got = 0L
+                    var lastPct = -2
+                    conn.inputStream.use { input ->
+                        FileOutputStream(tmp).use { out ->
+                            val buf = ByteArray(64 * 1024)
+                            while (true) {
+                                val n = input.read(buf)
+                                if (n < 0) break
+                                out.write(buf, 0, n)
+                                got += n
+                                val pct = if (total > 0) ((got * 100) / total).toInt() else -1
+                                if (pct != lastPct) {
+                                    lastPct = pct
+                                    onProgress(pct)
+                                }
+                            }
                         }
+                    }
+                    if (total > 0 && got != total) {
+                        LogUtil.w(AppConfig.TAG, "SnUpdate: download truncated $got/$total")
+                        -1L
+                    } else {
+                        got
                     }
                 }
             }
-            if (total > 0 && done != total) {
-                LogUtil.w(AppConfig.TAG, "SnUpdate: download truncated $done/$total")
-                return null
-            }
+            if (done < 0) return null
             if (!tmp.renameTo(target)) {
                 LogUtil.w(AppConfig.TAG, "SnUpdate: rename failed")
                 return null
@@ -154,10 +154,6 @@ object SnUpdateManager {
             null
         } finally {
             runCatching { tmp.delete() }
-            try {
-                conn?.disconnect()
-            } catch (_: Exception) {
-            }
         }
     }
 

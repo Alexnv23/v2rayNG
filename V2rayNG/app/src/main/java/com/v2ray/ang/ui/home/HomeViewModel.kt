@@ -55,6 +55,8 @@ data class HomeUiState(
     val theme: SnThemeManager.Theme = SnThemeManager.OFF,
     /** Пользователь включил оформление (PREF_SN_DECOR_ON, по умолчанию вкл). */
     val decorEnabled: Boolean = true,
+    /** Автоподключение при включении устройства (PREF_IS_BOOTED, по умолчанию выкл). */
+    val autoStart: Boolean = false,
 )
 
 /** Одноразовые сообщения для тостов (текст уже с сервера или пустой — тогда экран подставит свой). */
@@ -72,9 +74,33 @@ class HomeViewModel : ViewModel() {
     private var statsJob: Job? = null
     private var devicesJob: Job? = null
 
+    /**
+     * Подключение поднято (последнее значение из onRunningChanged). Сервис живёт в процессе :daemon,
+     * поэтому экран сам передаёт это в SnNet: пока подключено — запросы к ЛК идут через туннель.
+     */
+    @Volatile
+    private var coreRunning = false
+
     init {
         loadBypassLan()
         loadDecor()
+        loadAutoStart()
+    }
+
+    /** Прочитать настройку «Автоподключение» (PREF_IS_BOOTED). */
+    fun loadAutoStart() {
+        viewModelScope.launch(Dispatchers.IO) {
+            val on = MmkvManager.decodeStartOnBoot()
+            withContext(Dispatchers.Main) { _uiState.update { it.copy(autoStart = on) } }
+        }
+    }
+
+    /** Переключить «Автоподключение»: BootReceiver запустит подключение после включения устройства. */
+    fun setAutoStart(enabled: Boolean) {
+        _uiState.update { it.copy(autoStart = enabled) }
+        viewModelScope.launch(Dispatchers.IO) {
+            MmkvManager.encodeStartOnBoot(enabled)
+        }
     }
 
     /** Прочитать пользовательский тумблер «Анимация оформления» (по умолчанию вкл). */
@@ -95,13 +121,29 @@ class HomeViewModel : ViewModel() {
 
     private var themeChecked = false
 
-    /** Загрузить сезонную тему с сервера — один раз за запуск, тихо в фоне. */
+    /** Тема с сервера уже загрузилась удачно в этом запуске (иначе повторим после подключения). */
+    @Volatile
+    private var themeLoadedOk = false
+
+    /**
+     * Загрузить сезонную тему с сервера — один раз за запуск, тихо в фоне. Сначала сразу показываем
+     * последнюю тему из кэша (без сети), потом свежую. Сервер недоступен (ограничения мобильного
+     * интернета) — остаётся тема из кэша, после подключения повторим через туннель.
+     */
     fun checkTheme(force: Boolean = false) {
         if (themeChecked && !force) return
         themeChecked = true
         viewModelScope.launch(Dispatchers.IO) {
-            val theme = SnThemeManager.load(AngApplication.application)
-            withContext(Dispatchers.Main) { _uiState.update { it.copy(theme = theme) } }
+            val app = AngApplication.application
+            if (!themeLoadedOk) {
+                val cached = SnThemeManager.cached(app)
+                withContext(Dispatchers.Main) {
+                    _uiState.update { if (it.theme == SnThemeManager.OFF) it.copy(theme = cached) else it }
+                }
+            }
+            val fresh = SnThemeManager.load(app, viaCore = coreRunning) ?: return@launch
+            themeLoadedOk = true
+            withContext(Dispatchers.Main) { _uiState.update { it.copy(theme = fresh) } }
         }
     }
 
@@ -148,6 +190,7 @@ class HomeViewModel : ViewModel() {
      * на смену локации) значение сбрасывается — отсчёт начинается заново, как и должен.
      */
     fun onRunningChanged(isRunning: Boolean) {
+        coreRunning = isRunning
         if (!isRunning) {
             _uiState.update { it.copy(connectedAtMs = 0L) }
             return
@@ -162,10 +205,14 @@ class HomeViewModel : ViewModel() {
         _uiState.update { it.copy(connectedAtMs = start) }
         // Подключение поднялось — статистика могла не загрузиться до этого (нет сети / обход
         // ещё не готов). Перечитать чуть позже, когда тоннель точно живой.
-        if (uiState.value.stats == null && SnAccountManager.getToken() != null) {
+        // То же для сезонной темы: без туннеля при ограничениях мобильного интернета она не грузится.
+        val needStats = uiState.value.stats == null && SnAccountManager.getToken() != null
+        val needTheme = !themeLoadedOk
+        if (needStats || needTheme) {
             viewModelScope.launch {
                 delay(3000L)
-                refreshStats()
+                if (needStats) refreshStats()
+                if (needTheme) checkTheme(force = true)
             }
         }
     }
@@ -177,7 +224,7 @@ class HomeViewModel : ViewModel() {
         if (updateChecked && !force) return
         updateChecked = true
         viewModelScope.launch(Dispatchers.IO) {
-            val info = SnUpdateManager.check() ?: return@launch
+            val info = SnUpdateManager.check(viaCore = coreRunning) ?: return@launch
             withContext(Dispatchers.Main) { _uiState.update { it.copy(update = info) } }
         }
     }
@@ -213,7 +260,7 @@ class HomeViewModel : ViewModel() {
         updateJob?.cancel()
         _uiState.update { it.copy(updateDownloading = true, updateProgress = 0, updateError = false) }
         updateJob = viewModelScope.launch(Dispatchers.IO) {
-            val apk = SnUpdateManager.download(appContext, info) { pct ->
+            val apk = SnUpdateManager.download(appContext, info, viaCore = coreRunning) { pct ->
                 _uiState.update { it.copy(updateProgress = pct) }
             }
             val launched = apk != null && SnUpdateManager.install(appContext, apk)
@@ -236,7 +283,7 @@ class HomeViewModel : ViewModel() {
         statsJob?.cancel()
         _uiState.update { it.copy(statsLoading = true) }
         statsJob = viewModelScope.launch(Dispatchers.IO) {
-            val stats = SnAccountManager.fetch(token)
+            val stats = SnAccountManager.fetch(token, viaCore = coreRunning)
             if (stats != null) SnAccountManager.cacheDisplayName(stats.displayName)
             withContext(Dispatchers.Main) {
                 _uiState.update {
@@ -253,7 +300,7 @@ class HomeViewModel : ViewModel() {
         devicesJob?.cancel()
         _uiState.update { it.copy(devicesBusy = true) }
         devicesJob = viewModelScope.launch(Dispatchers.IO) {
-            val (ok, msg) = SnAccountManager.revokeDevice(token, deviceId)
+            val (ok, msg) = SnAccountManager.revokeDevice(token, deviceId, viaCore = coreRunning)
             withContext(Dispatchers.Main) {
                 _uiState.update { it.copy(devicesBusy = false) }
                 _messages.tryEmit(SnMessage(ok, msg))
@@ -272,7 +319,7 @@ class HomeViewModel : ViewModel() {
         devicesJob = viewModelScope.launch(Dispatchers.IO) {
             var okCount = 0
             for (d in devices) {
-                val (ok, _) = SnAccountManager.revokeDevice(token, d.id)
+                val (ok, _) = SnAccountManager.revokeDevice(token, d.id, viaCore = coreRunning)
                 if (ok) okCount++
             }
             withContext(Dispatchers.Main) {

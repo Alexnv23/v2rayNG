@@ -51,6 +51,8 @@ fun SnSettingsScreen(
     onDeleteSubscription: () -> Unit,
     onOpenPerApp: () -> Unit,
     onBypassLanChange: (Boolean) -> Unit,
+    autoStart: Boolean,
+    onAutoStartChange: (Boolean) -> Unit,
     decorEnabled: Boolean,
     onDecorChange: (Boolean) -> Unit,
     onOpenLogcat: () -> Unit,
@@ -101,6 +103,8 @@ fun SnSettingsScreen(
         SettingRow(stringResource(R.string.sn_settings_per_app), stringResource(R.string.sn_settings_per_app_sub), onOpenPerApp)
         Spacer(Modifier.height(10.dp))
         SwitchRow(stringResource(R.string.sn_settings_bypass_lan), stringResource(R.string.sn_settings_bypass_lan_sub), bypassLan, onBypassLanChange)
+        Spacer(Modifier.height(10.dp))
+        SwitchRow(stringResource(R.string.sn_settings_autostart), stringResource(R.string.sn_settings_autostart_sub), autoStart, onAutoStartChange)
 
         Spacer(Modifier.height(18.dp))
         SectionLabel(stringResource(R.string.sn_settings_section_more))
