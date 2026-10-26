@@ -70,8 +70,8 @@ jobs:
     - name: Checkout olcRTC (pinned)
       uses: actions/checkout@v7
       with:
-        repository: openlibrecommunity/olcrtc
-        ref: 189d16c093c4f721376afb5eaa0213d132a11242
+        repository: ghostlane-project/olcrtc
+        ref: b2c4b17ee35bfe65330aa9141f94dac082228bb2
         path: olcrtc
         fetch-depth: 1
 
