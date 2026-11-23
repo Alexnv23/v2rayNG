@@ -4,7 +4,9 @@ import com.v2ray.ang.AppConfig
 import com.v2ray.ang.AppConfig.LOOPBACK
 import com.v2ray.ang.BuildConfig
 import com.v2ray.ang.dto.UrlContentRequest
+import com.v2ray.ang.handler.SnDeviceInfo
 import okhttp3.Credentials
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.File
@@ -156,8 +158,9 @@ object HttpUtil {
             } else {
                 request.userAgent
             }
+            val destination = currentUrl.toHttpUrl()
             val requestBuilder = Request.Builder()
-                .url(currentUrl)
+                .url(destination)
                 .get()
                 .header("User-agent", finalUserAgent)
                 .header("Connection", "close")
@@ -173,6 +176,8 @@ object HttpUtil {
                 } catch (_: IllegalArgumentException) {
                 }
             }
+
+            SnDeviceInfo.addSubscriptionHeaders(destination, requestBuilder)
 
             if (request.httpPort != 0 && !request.proxyUsername.isNullOrBlank() && !request.proxyPassword.isNullOrBlank()) {
                 requestBuilder.header("Proxy-Authorization", Credentials.basic(request.proxyUsername, request.proxyPassword))
