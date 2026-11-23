@@ -13,8 +13,8 @@ android {
         applicationId = "com.supernet.app"
         minSdk = 24
         targetSdk = 37
-        versionCode = 16
-        versionName = "1.3.11"
+        versionCode = 17
+        versionName = "1.3.12"
 
         val abiFilterList = (properties["ABI_FILTERS"] as? String)?.split(';')
         splits {
