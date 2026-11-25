@@ -254,30 +254,7 @@ jobs:
           ls -lh "$(dirname "$apk")"
           exit 1
         fi
-        report="$RUNNER_TEMP/universal-signers.txt"
-        "$ANDROID_HOME/build-tools/37.0.0/apksigner" verify --print-certs "$apk" | tee "$report"
-        python3 - "$apk" "$report" <<'PY'
-        import re
-        import sys
-        from pathlib import Path
-        from zipfile import ZipFile
-
-        expected = "2c882b78ec03386963b9cc0f20a75e4528551642ee9b6f464c7ad8cccd60dbe6"
-        report = Path(sys.argv[2]).read_text()
-        fingerprints = {h.lower() for h in re.findall(
-            r"^Signer [^\r\n]+? certificate SHA-256 digest:[ \t]*([^\s]+)[ \t]*\r?$",
-            report, re.MULTILINE)}
-        if fingerprints != {expected}:
-            sys.exit(f"::error::Expected SuperNet certificate {expected}, found {sorted(fingerprints)}")
-        with ZipFile(sys.argv[1]) as archive:
-            files = {item.filename for item in archive.infolist() if item.file_size}
-        for abi in ("armeabi-v7a", "arm64-v8a", "x86", "x86_64"):
-            for library in ("libgojni.so", "libhev-socks5-tunnel.so", "libhevsockstun.so"):
-                path = f"lib/{abi}/{library}"
-                if path not in files:
-                    sys.exit(f"::error::Universal APK is missing {path}")
-        print("Universal APK verified for all four ABIs")
-        PY
+        java -cp "$ANDROID_HOME/build-tools/37.0.0/lib/apksigner.jar" .github/scripts/VerifySuperNetApk.java "$apk"
 
     - name: Upload verified universal APK
       if: github.ref_name == 'supernet/1.3.13-live-themes'
