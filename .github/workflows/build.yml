@@ -9,6 +9,7 @@ on:
   push:
     branches:
       - master
+      - supernet/1.3.13-live-themes
 
 permissions:
   contents: write
