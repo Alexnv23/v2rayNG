@@ -243,6 +243,30 @@ jobs:
         retention-days: 5
         path: ${{ github.workspace }}/V2rayNG/app/build/outputs/apk/playstore/release/*armeabi-v7a*.apk
 
+    - name: Verify universal APK for the in-app updater
+      if: github.ref_name == 'supernet/1.3.13-live-themes'
+      shell: bash
+      run: |
+        set -euo pipefail
+        apk=V2rayNG/app/build/outputs/apk/playstore/release/SuperNet_1.3.13_universal.apk
+        certificate=$("$ANDROID_HOME/build-tools/37.0.0/apksigner" verify --print-certs "$apk")
+        grep -Fx 'Signer #1 certificate SHA-256 digest: 2c882b78ec03386963b9cc0f20a75e4528551642ee9b6f464c7ad8cccd60dbe6' <<< "$certificate"
+        entries=$(unzip -Z1 "$apk")
+        for abi in armeabi-v7a arm64-v8a x86 x86_64; do
+          for lib in libgojni.so libhev-socks5-tunnel.so libhevsockstun.so; do
+            grep -Fx "lib/$abi/$lib" <<< "$entries"
+          done
+        done
+
+    - name: Upload verified universal APK
+      if: github.ref_name == 'supernet/1.3.13-live-themes'
+      uses: actions/upload-artifact@v7
+      with:
+        name: universal
+        if-no-files-found: error
+        retention-days: 5
+        path: V2rayNG/app/build/outputs/apk/playstore/release/SuperNet_1.3.13_universal.apk
+
   sign-and-release:
     needs: build
     runs-on: ubuntu-26.04
