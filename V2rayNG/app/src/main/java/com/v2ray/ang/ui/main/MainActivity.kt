@@ -189,7 +189,7 @@ class MainActivity : HelperBaseComponentActivity() {
         val snDecorActive = homeState.theme.enabled && homeState.decorEnabled && homeState.theme.hasBg
         Box(modifier = Modifier.fillMaxSize()) {
             com.v2ray.ang.ui.compose.SnSeasonalBackground(
-                enabled = homeState.theme.enabled && homeState.decorEnabled,
+                enabled = snDecorActive && (tab == SnTab.HOME || tab == SnTab.LOCATIONS || tab == SnTab.FRIENDS),
                 anim = homeState.theme.anim,
                 bgPath = homeState.theme.bgPath,
             )

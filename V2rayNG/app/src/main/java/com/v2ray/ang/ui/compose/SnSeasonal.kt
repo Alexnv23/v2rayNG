@@ -1,6 +1,5 @@
 package com.v2ray.ang.ui.compose
 
-import android.graphics.BitmapFactory
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -9,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
@@ -55,14 +55,27 @@ fun SnSeasonalBackground(
 ) {
     if (!enabled || bgPath.isNullOrEmpty()) return
 
-    // Декод фона — вне главного потока.
-    val bg by produceState<ImageBitmap?>(initialValue = null, bgPath) {
-        value = withContext(Dispatchers.IO) {
-            runCatching { BitmapFactory.decodeFile(bgPath)?.asImageBitmap() }.getOrNull()
+    key(bgPath) {
+        val background by produceState<SeasonalArtwork?>(null, bgPath) {
+            value = withContext(Dispatchers.IO) { loadSeasonalArtwork(bgPath) }
+        }
+        when (val artwork = background) {
+            null -> Unit
+            is SeasonalArtwork.Still -> StaticSeasonalBackground(artwork.bitmap, anim, modifier)
+            else -> Box(modifier.fillMaxSize()) {
+                LiveSeasonalBackground(artwork)
+                Box(Modifier.fillMaxSize().background(scrimBrush))
+            }
         }
     }
-    val bitmap = bg ?: return
+}
 
+@Composable
+private fun StaticSeasonalBackground(
+    bitmap: ImageBitmap,
+    anim: SnThemeManager.Anim,
+    modifier: Modifier,
+) {
     val ctx = LocalContext.current
     val leaf: ImageBitmap? = if (anim == SnThemeManager.Anim.LEAVES) {
         remember {
@@ -75,6 +88,7 @@ fun SnSeasonalBackground(
     // Тик кадра: гоним ~60 fps, Canvas перерисовывается на каждое изменение tick.
     var tick by remember { mutableLongStateOf(0L) }
     LaunchedEffect(anim) {
+        if (anim == SnThemeManager.Anim.NONE) return@LaunchedEffect
         while (true) {
             androidx.compose.runtime.withFrameNanos { }
             tick++
